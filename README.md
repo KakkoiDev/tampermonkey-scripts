@@ -24,7 +24,7 @@ Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with th
 
 ## Managing publishing
 
-`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The companion **`greasyfork` Claude skill** drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
+`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The bundled **`greasyfork` Claude skill** (in [`skills/greasyfork/`](skills/greasyfork/), symlinked into `~/.claude/skills/` so Claude auto-discovers it) drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
 
 - **verify** (read-only, no login): check that every script's local `@version` matches the published and raw-served versions.
   `node ~/.claude/skills/greasyfork/scripts/verify.mjs`
@@ -40,8 +40,13 @@ The write tools (register/set-sync/status) use a local headful browser (no API; 
 
 1. Fork/clone, replace the `.user.js` files with your own.
 2. Edit `greasyfork.json`: one entry per script (`file`, `id` (`null` until published), `visibility`, `name`).
-3. `git config core.hooksPath .githooks` (see below), then publish/sync with the `greasyfork` skill.
-4. Set up the per-user Greasy Fork webhook on your repo (Settings -> Webhooks) using the URL shown at `greasyfork.org/en/users/webhook-info`.
+3. Enable the version hook and the bundled skill:
+   ```sh
+   git config core.hooksPath .githooks
+   ln -s "$PWD/skills/greasyfork" ~/.claude/skills/greasyfork   # let Claude auto-discover the skill
+   npm install --prefix skills/greasyfork/scripts              # deps for the browser tools (verify needs none)
+   ```
+4. Publish/sync with the `greasyfork` skill, then set up the per-user Greasy Fork webhook on your repo (Settings -> Webhooks) using the URL at `greasyfork.org/en/users/webhook-info`.
 
 ## Setup after clone
 

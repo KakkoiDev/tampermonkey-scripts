@@ -1,0 +1,9 @@
+{
+  "name": "greasyfork-skill-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Browser automation deps for the greasyfork skill. verify.mjs needs none of this.",
+  "dependencies": {
+    "puppeteer": "*"
+  }
+}
