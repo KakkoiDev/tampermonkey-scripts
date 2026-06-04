@@ -4,12 +4,17 @@ Userscripts by KakkoiDev, version-controlled here and published on Greasy Fork. 
 
 ## Scripts
 
+<sub>Auto-generated from `greasyfork.json` by the pre-commit hook (`tools/gen-readme.mjs`); do not hand-edit between the markers.</sub>
+
+<!-- scripts:start -->
 | Script | What it does | Runs on | Install |
 |---|---|---|---|
-| [Gmeet++](gmeet-pp.user.js) | Auto-mute mic & cam on join, invert-colors button, random participant picker, and more for Google Meet | `meet.google.com` | [Greasy Fork](https://greasyfork.org/en/scripts/513815-gmeet) |
-| [GitHub PR Load All Comments](github-pr-load-all-comments.user.js) | Adds a "Load all!" button that expands every hidden conversation in a GitHub PR | `github.com` | [Greasy Fork](https://greasyfork.org/en/scripts/564954) |
-| [Langfinity Loby Defaults](langfinity-loby-defaults.user.js) | Turns off mic & camera in the Langfinity lobby and remembers your last-used name | `langfinity.ai/meeting` | [Greasy Fork](https://greasyfork.org/en/scripts/557742-langfinity-loby-defaults) |
-| [Slack AI Translate](slack-ai-translate.user.js) | Adds an English/Japanese translation button to Slack messages and the composer | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581056-slack-ai-translate) (unlisted - direct link only) |
+| [Gmeet++](scripts/gmeet-pp.user.js) | Auto-mute mic & cam on join, invert-colors button, random participant picker, and more for Google Meet | `meet.google.com` | [Greasy Fork](https://greasyfork.org/en/scripts/513815) |
+| [GitHub PR Load All Comments](scripts/github-pr-load-all-comments.user.js) | Adds a "Load all!" button that expands every hidden conversation in a GitHub PR | `github.com` | [Greasy Fork](https://greasyfork.org/en/scripts/564954) |
+| [Langfinity Loby Defaults](scripts/langfinity-loby-defaults.user.js) | Turns off mic & camera in the Langfinity lobby and remembers your last-used name | `langfinity.ai/meeting` | [Greasy Fork](https://greasyfork.org/en/scripts/557742) |
+| [Slack AI Translate](scripts/slack-ai-translate.user.js) | Adds an English/Japanese translation button to Slack messages and the composer | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581056) (unlisted - direct link) |
+| [Slack Auto-remove Preview](scripts/slack-auto-remove-preview.user.js) | Automatically removes link previews on your own Slack messages | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581085) (unlisted - direct link) |
+<!-- scripts:end -->
 
 ## How publishing works
 

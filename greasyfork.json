@@ -2,34 +2,39 @@
   "locale": "en",
   "scripts": [
     {
-      "file": "gmeet-pp.user.js",
+      "file": "scripts/gmeet-pp.user.js",
       "id": "513815",
       "visibility": "public",
-      "name": "Gmeet++"
+      "name": "Gmeet++",
+      "blurb": "Auto-mute mic & cam on join, invert-colors button, random participant picker, and more for Google Meet"
     },
     {
-      "file": "github-pr-load-all-comments.user.js",
+      "file": "scripts/github-pr-load-all-comments.user.js",
       "id": "564954",
       "visibility": "public",
-      "name": "GitHub PR Load All Comments"
+      "name": "GitHub PR Load All Comments",
+      "blurb": "Adds a \"Load all!\" button that expands every hidden conversation in a GitHub PR"
     },
     {
-      "file": "langfinity-loby-defaults.user.js",
+      "file": "scripts/langfinity-loby-defaults.user.js",
       "id": "557742",
       "visibility": "public",
-      "name": "Langfinity Loby Defaults"
+      "name": "Langfinity Loby Defaults",
+      "blurb": "Turns off mic & camera in the Langfinity lobby and remembers your last-used name"
     },
     {
-      "file": "slack-ai-translate.user.js",
+      "file": "scripts/slack-ai-translate.user.js",
       "id": "581056",
       "visibility": "unlisted",
-      "name": "Slack AI Translate"
+      "name": "Slack AI Translate",
+      "blurb": "Adds an English/Japanese translation button to Slack messages and the composer"
     },
     {
-      "file": "slack-auto-remove-preview.user.js",
+      "file": "scripts/slack-auto-remove-preview.user.js",
       "id": "581085",
       "visibility": "unlisted",
-      "name": "Slack Auto-remove Preview"
+      "name": "Slack Auto-remove Preview",
+      "blurb": "Automatically removes link previews on your own Slack messages"
     }
   ]
 }

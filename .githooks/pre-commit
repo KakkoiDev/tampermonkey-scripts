@@ -1,5 +1,14 @@
 #!/bin/sh
+# Auto-bump @version on changed userscripts.
 files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.user\.js$')
-[ -z "$files" ] && exit 0
-node tools/bump-version.mjs $files || exit 1
-git add $files
+if [ -n "$files" ]; then
+    node tools/bump-version.mjs $files || exit 1
+    git add $files
+fi
+
+# Regenerate the README scripts table when scripts or the manifest change,
+# so the table can never drift from greasyfork.json.
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.user\.js$|^greasyfork\.json$'; then
+    node tools/gen-readme.mjs || exit 1
+    git add README.md
+fi
