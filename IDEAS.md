@@ -1,1 +1,23 @@
+1. Slack quick edit:
+  - when click on my own messages, enter edit mode
+  - when click outside the box, save edits
 
+2. Slack Self DM:
+  - Like the forward option in the hover on message but will directly DM to myself without confirmation
+  - new Slack-design-system-compliant arrow icon in the hover menu on messages
+  - click sends copy of message directly without confirmation
+  - Add a mention at the end of the DM with the link to the original message (parse to only leave the link to the latest message in case there are other origin links with our format). Format should be "Self DM from [this message](link-to-message)"
+
+3. Slack Todo Emoji:
+  - When double click on text input, insert :white_square: emoji
+  - when cliking on an emoji, if it is part of the todo emoji system, update emoji to the next one in the loop
+  - loop cycle is: :white_square: -> :arrow_forward: -> :white_check_mark: -> :double_vertical_bar: -> :x:
+  - tabs now add 7 spaces
+  - when pressing <Enter> to go to a new line, if a todo emoji is on that line: go the next line, keep space indent, auto-add a :white_square: emoji
+
+4. Slack Auto-remove Preview:
+  - When a preview is detected, if I own it, click on the x to delete it.
+
+5. Slack MarkItDown:
+  - create a button in the header of channels, in the header of thread and in the hover menu of message to copy through MarkItDown. The goal is to preserve structure and links.
+  - The button should only copy the content that we expect is to copy: channel, thread, message. Not the navigation or the right-side notification menu.
