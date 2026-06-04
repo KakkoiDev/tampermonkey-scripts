@@ -16,6 +16,13 @@
       "blurb": "Adds a \"Load all!\" button that expands every hidden conversation in a GitHub PR"
     },
     {
+      "file": "scripts/github-pr-copy-diff.user.js",
+      "id": null,
+      "visibility": "public",
+      "name": "GitHub PR Copy Diff",
+      "blurb": "Adds a \"Copy Diff\" button to the PR nav that copies the unified diff to the clipboard"
+    },
+    {
       "file": "scripts/langfinity-loby-defaults.user.js",
       "id": "557742",
       "visibility": "public",

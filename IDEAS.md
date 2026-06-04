@@ -21,3 +21,8 @@
 5. Slack MarkItDown:
   - create a button in the header of channels, in the header of thread and in the hover menu of message to copy through MarkItDown. The goal is to preserve structure and links.
   - The button should only copy the content that we expect is to copy: channel, thread, message. Not the navigation or the right-side notification menu.
+
+6. GitHub Show/Copy PR diff:
+  - in the top nav bar, next to "Files Changed", add a "Copy Diff" button
+  - when pressing the button, briefly open a tab to pr-url.diff and copy it content to the clipboard
+  - then close the tab.
