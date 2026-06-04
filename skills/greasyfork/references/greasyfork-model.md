@@ -18,6 +18,9 @@ No API auth exists. `scripts/lib.mjs` launches Chromium with `userDataDir = ~/.c
 4. A **per-user webhook** (`greasyfork.org/en/users/<id>-<name>/webhook`, content type `application/json`, push event, no secret) added to the repo (Settings -> Webhooks) makes pushes near-immediate. Without it, Automatic sync is periodic. The raw GitHub CDN can lag ~5 min.
 5. Files must be edited **in place** (committed, then modified) so webhook payloads show them as *modified*, not *added* - newly *added* files in a push are skipped by Greasy Fork's webhook handler.
 
+## Moving or renaming a script's file
+The sync URL is **path-based**. Moving or renaming a `.user.js` (e.g. into a `scripts/` folder) changes its raw URL, so the configured sync URL goes stale and the next sync 404s - the published listing then just keeps its last version (no data loss, but it stops updating). After any move/rename you MUST re-run `set-sync` for the affected scripts to re-point them at the new raw URL. Update the `file` field in `greasyfork.json` (the single source of the path); `set-sync` derives the new URL from it. Pure `git mv` renames don't bump `@version`, so nothing republishes - only the URL needs re-pointing.
+
 ## Stripped meta keys
 Greasy Fork strips `@downloadURL`, `@updateURL`, `@installURL` and serves updates from its own `update.greasyfork.org` URLs. Don't bother setting them in source. `@namespace` + `@name` are the identity - changing either on update triggers a warning.
 

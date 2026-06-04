@@ -36,6 +36,7 @@ Tip: add `console.log('[my-script] vN loaded')` and bump `N` to confirm reloads 
 - **"Not allowed to load local resource" / nothing loads** - file access isn't granted (see Requirements), or Site access isn't "On all sites".
 - **Edits don't show on reload** - the `@require` is being cached. Set Tampermonkey -> *Settings* -> **Externals -> Update Interval** to anything other than "Never", or re-save the loader once to force a refetch. (On 5.5.6237 it was live even with "Never".)
 - **Firefox** - not supported; use Chrome.
+- **Stopped loading after a move/rename** - the loader shows "active" but nothing runs and no logs appear. The `@require file://` still points at the file's old path. Update it to the new location. (Moving a file has two coupling points: this loader path **and** the script's Greasy Fork sync URL, which also needs re-pointing - see the skill's [greasyfork-model](skills/greasyfork/references/greasyfork-model.md).)
 
 ## Relationship to production
 The loader is **dev-only** and lives only in your Tampermonkey - it is not part of this repo. The real `.user.js` file is what gets published: it syncs to Greasy Fork via the [`greasyfork` skill](skills/greasyfork/) (see the README). Same source file, two consumption paths - local loader for development, Greasy Fork raw URL for release.
