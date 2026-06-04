@@ -25,10 +25,10 @@ Publish and keep userscripts in sync on Greasy Fork from a git repo. Run the scr
 ## Commands (run from the repo root)
 | Task | Command | Auth |
 |---|---|---|
-| Check everything is in sync | `node ~/.claude/skills/greasyfork/scripts/verify.mjs` | none |
-| Wire/refresh sync for scripts | `node ~/.claude/skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` | browser |
-| Publish a new script | `node ~/.claude/skills/greasyfork/scripts/register.mjs <file.user.js>` | browser |
-| List what's syncing | `node ~/.claude/skills/greasyfork/scripts/status.mjs` | browser |
+| Check everything is in sync | `node skills/greasyfork/scripts/verify.mjs` | none |
+| Wire/refresh sync for scripts | `node skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` | browser |
+| Publish a new script | `node skills/greasyfork/scripts/register.mjs <file.user.js>` | browser |
+| List what's syncing | `node skills/greasyfork/scripts/status.mjs` | browser |
 
 `verify` is the source of truth and works even if the browser tools break - prefer it for "did it sync?".
 

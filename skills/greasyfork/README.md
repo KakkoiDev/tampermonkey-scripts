@@ -5,21 +5,28 @@ Publish and keep userscripts in sync on Greasy Fork (greasyfork.org) from a git 
 ## One-time setup
 1. Install Puppeteer for the browser tools (Chromium downloads once into `~/.cache/puppeteer`):
    ```sh
-   npm install --prefix ~/.claude/skills/greasyfork/scripts
+   npm install --prefix skills/greasyfork/scripts
    ```
 2. The first browser command opens a visible window on Greasy Fork's sign-in page. Log in once (any method). The session persists to `~/.cache/greasyfork/profile`; later runs reuse it. Your login tab is never reloaded.
 
 `verify` needs neither step - it uses only the public API and Node's built-in `fetch`.
+
+## Discovery (works across agents)
+Harness-agnostic (SKILL.md + Node scripts, agentskills.io frontmatter). Discovered from:
+- **Claude Code**: `~/.claude/skills/greasyfork` (symlink to this dir).
+- **pi / Codex / OpenCode**: `.agents/skills/greasyfork` in the repo (committed symlink to this dir) - the community-standard project location.
+
+Commands use repo-relative paths and assume cwd = the userscript repo root, so they work from any harness here. From a different repo, prefix with wherever the skill is installed.
 
 ## Use
 Run from the root of a repo that contains a `greasyfork.json` ([schema](references/manifest.md)):
 
 | Task | Command |
 |---|---|
-| Check sync (read-only) | `node ~/.claude/skills/greasyfork/scripts/verify.mjs` |
-| Configure/refresh sync | `node ~/.claude/skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` |
-| Publish a new script | `node ~/.claude/skills/greasyfork/scripts/register.mjs <file.user.js>` |
-| List what's syncing | `node ~/.claude/skills/greasyfork/scripts/status.mjs` |
+| Check sync (read-only) | `node skills/greasyfork/scripts/verify.mjs` |
+| Configure/refresh sync | `node skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` |
+| Publish a new script | `node skills/greasyfork/scripts/register.mjs <file.user.js>` |
+| List what's syncing | `node skills/greasyfork/scripts/status.mjs` |
 
 ## Troubleshooting
 - **DRIFT in verify** - `@version` wasn't bumped, the GitHub raw CDN is lagging (~5 min), or the webhook didn't deliver (repo Settings -> Webhooks -> Recent Deliveries).

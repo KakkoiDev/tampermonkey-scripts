@@ -24,14 +24,14 @@ Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with th
 
 ## Managing publishing
 
-`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The bundled **`greasyfork` Claude skill** (in [`skills/greasyfork/`](skills/greasyfork/), symlinked into `~/.claude/skills/` so Claude auto-discovers it) drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
+`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The bundled **`greasyfork` skill** (in [`skills/greasyfork/`](skills/greasyfork/); discovered by Claude Code via `~/.claude/skills/`, and by pi/Codex/OpenCode via the repo's [`.agents/skills/`](.agents/skills/)) drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
 
 - **verify** (read-only, no login): check that every script's local `@version` matches the published and raw-served versions.
-  `node ~/.claude/skills/greasyfork/scripts/verify.mjs`
+  `node skills/greasyfork/scripts/verify.mjs`
 - **set-sync**: configure sync-from-URL + Automatic and trigger an immediate sync.
-  `node ~/.claude/skills/greasyfork/scripts/set-sync.mjs [id|file|all]`
+  `node skills/greasyfork/scripts/set-sync.mjs [id|file|all]`
 - **register**: publish a new script (visibility from the manifest) and write its id back.
-  `node ~/.claude/skills/greasyfork/scripts/register.mjs <file.user.js>`
+  `node skills/greasyfork/scripts/register.mjs <file.user.js>`
 - **status**: list which scripts Greasy Fork has set up to sync.
 
 The write tools (register/set-sync/status) use a local headful browser (no API; Cloudflare requires your machine/IP) and a persisted login profile. `verify` uses only the public JSON API. See the skill's README for one-time setup.
@@ -43,9 +43,10 @@ The write tools (register/set-sync/status) use a local headful browser (no API; 
 3. Enable the version hook and the bundled skill:
    ```sh
    git config core.hooksPath .githooks
-   ln -s "$PWD/skills/greasyfork" ~/.claude/skills/greasyfork   # let Claude auto-discover the skill
+   ln -s "$PWD/skills/greasyfork" ~/.claude/skills/greasyfork   # Claude Code global discovery
    npm install --prefix skills/greasyfork/scripts              # deps for the browser tools (verify needs none)
    ```
+   pi / Codex / OpenCode auto-discover the skill via the committed `.agents/skills/greasyfork` symlink - no setup needed.
 4. Publish/sync with the `greasyfork` skill, then set up the per-user Greasy Fork webhook on your repo (Settings -> Webhooks) using the URL at `greasyfork.org/en/users/webhook-info`.
 
 ## Setup after clone
