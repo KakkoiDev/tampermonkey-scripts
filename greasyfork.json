@@ -24,6 +24,12 @@
       "id": "581056",
       "visibility": "unlisted",
       "name": "Slack AI Translate"
+    },
+    {
+      "file": "slack-auto-remove-preview.user.js",
+      "id": "581085",
+      "visibility": "unlisted",
+      "name": "Slack Auto-remove Preview"
     }
   ]
 }
