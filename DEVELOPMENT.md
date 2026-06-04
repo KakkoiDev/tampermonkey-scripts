@@ -39,3 +39,6 @@ Tip: add `console.log('[my-script] vN loaded')` and bump `N` to confirm reloads 
 
 ## Relationship to production
 The loader is **dev-only** and lives only in your Tampermonkey - it is not part of this repo. The real `.user.js` file is what gets published: it syncs to Greasy Fork via the [`greasyfork` skill](skills/greasyfork/) (see the README). Same source file, two consumption paths - local loader for development, Greasy Fork raw URL for release.
+
+## Site-specific notes
+- **Slack** (`app.slack.com`) - selectors, shared confirm-dialog scoping, SPA patterns, and the discovery probe, learned building scripts: [docs/slack-userscripts.md](docs/slack-userscripts.md).
