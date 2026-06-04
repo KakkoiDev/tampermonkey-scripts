@@ -15,15 +15,36 @@ Create a small **dev loader** userscript in Tampermonkey that pulls the real fil
 // @name         DEV: <Script Name> (local)
 // @namespace    http://tampermonkey.net/
 // @version      0.0.1
-// @match        <copy the real script's @match>
-// @grant        <copy the real script's @grant>
-// @require      file:///absolute/path/to/<script>.user.js
+// @match        <copy from the real script>
+// @grant        <copy EVERY @grant from the real script, incl. GM_* ones>
+// @connect      <copy every @connect, if it uses GM_xmlhttpRequest>
+// @run-at       <copy if the real script sets it>
+// @require      file:///absolute/path/to/scripts/<script>.user.js
 // ==/UserScript==
 ```
 
 Two things that bite people:
-- **The `@require`d file's own `// ==UserScript==` header is ignored** - it runs as a plain library. So `@match`, `@grant`, and `@run-at` must be set on the **loader**, not the target file.
+- **The `@require`d file's own `// ==UserScript==` header is IGNORED** - Tampermonkey runs it as a plain library and reads metadata only from the **loader**. Copy *every* runtime key onto the loader: `@match`, **every** `@grant` (including `GM_*` like `GM_xmlhttpRequest` / `GM_setClipboard`), **`@connect`** (every domain a `GM_xmlhttpRequest` reaches, *including redirect targets*), `@run-at`, and any `@require`/`@resource` the script uses. Miss a `@grant` and that `GM_*` function is `undefined`; miss a `@connect` and the request is blocked.
 - **Disable any installed/published copy** of the same script (e.g. the one synced from Greasy Fork) so it doesn't run twice alongside the loader.
+
+### Scripts that call `GM_*` APIs (e.g. `GM_xmlhttpRequest`)
+A plain `@grant none` loader is enough for most scripts, but ones using GM APIs need their grants AND connect domains on the **loader**, plus a one-time browser permission:
+- On the first cross-origin `GM_xmlhttpRequest`, Tampermonkey prompts *"userscript wants to connect to `<domain>`"* - click **Always allow**. `@connect` must list every domain reached, **including redirect targets** (a `github.com/.../pull/N.diff` request 302s to `githubusercontent.com`, so both are required).
+
+Example loader for `scripts/github-pr-copy-diff.user.js`:
+```javascript
+// ==UserScript==
+// @name         DEV: GitHub PR Copy Diff (local)
+// @namespace    http://tampermonkey.net/
+// @version      0.0.1
+// @match        https://github.com/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_setClipboard
+// @connect      github.com
+// @connect      githubusercontent.com
+// @require      file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/github-pr-copy-diff.user.js
+// ==/UserScript==
+```
 
 ## The loop
 1. Edit the real `.user.js` file (you or an AI/editor).
@@ -37,6 +58,7 @@ Tip: add `console.log('[my-script] vN loaded')` and bump `N` to confirm reloads 
 - **Edits don't show on reload** - the `@require` is being cached. Set Tampermonkey -> *Settings* -> **Externals -> Update Interval** to anything other than "Never", or re-save the loader once to force a refetch. (On 5.5.6237 it was live even with "Never".)
 - **Firefox** - not supported; use Chrome.
 - **Stopped loading after a move/rename** - the loader shows "active" but nothing runs and no logs appear. The `@require file://` still points at the file's old path. Update it to the new location. (Moving a file has two coupling points: this loader path **and** the script's Greasy Fork sync URL, which also needs re-pointing - see the skill's [greasyfork-model](skills/greasyfork/references/greasyfork-model.md).)
+- **`GM_… is not defined`, or a `GM_xmlhttpRequest` is blocked/empty** - the loader is missing the `@grant` (for that `GM_*` function) or the `@connect` (for the domain/redirect target). The target file's own header doesn't count; add them to the **loader** and reload.
 
 ## Relationship to production
 The loader is **dev-only** and lives only in your Tampermonkey - it is not part of this repo. The real `.user.js` file is what gets published: it syncs to Greasy Fork via the [`greasyfork` skill](skills/greasyfork/) (see the README). Same source file, two consumption paths - local loader for development, Greasy Fork raw URL for release.
