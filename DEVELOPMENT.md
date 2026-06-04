@@ -15,6 +15,7 @@ Create a small **dev loader** userscript in Tampermonkey that pulls the real fil
 // @name         DEV: <Script Name> (local)
 // @namespace    http://tampermonkey.net/
 // @version      0.0.1
+// @description  dev loader
 // @match        <copy from the real script>
 // @grant        <copy EVERY @grant from the real script, incl. GM_* ones>
 // @connect      <copy every @connect, if it uses GM_xmlhttpRequest>
@@ -22,6 +23,8 @@ Create a small **dev loader** userscript in Tampermonkey that pulls the real fil
 // @require      file:///absolute/path/to/scripts/<script>.user.js
 // ==/UserScript==
 ```
+
+`@name`, `@namespace`, `@version`, and `@description` are all required by the userscript linter (`eslint-plugin-userscripts`, which Tampermonkey's editor runs) - `@description` is the one people forget; any text works. Everything else above is needed at runtime.
 
 Two things that bite people:
 - **The `@require`d file's own `// ==UserScript==` header is IGNORED** - Tampermonkey runs it as a plain library and reads metadata only from the **loader**. Copy *every* runtime key onto the loader: `@match`, **every** `@grant` (including `GM_*` like `GM_xmlhttpRequest` / `GM_setClipboard`), **`@connect`** (every domain a `GM_xmlhttpRequest` reaches, *including redirect targets*), `@run-at`, and any `@require`/`@resource` the script uses. Miss a `@grant` and that `GM_*` function is `undefined`; miss a `@connect` and the request is blocked.
@@ -37,6 +40,7 @@ Example loader for `scripts/github-pr-copy-diff.user.js`:
 // @name         DEV: GitHub PR Copy Diff (local)
 // @namespace    http://tampermonkey.net/
 // @version      0.0.1
+// @description  dev loader
 // @match        https://github.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard
