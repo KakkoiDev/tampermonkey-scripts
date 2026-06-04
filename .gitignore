@@ -1,6 +1,3 @@
 .DS_Store
 node_modules/
-.web-bot/
-# Local browser-automation tooling (one-off Greasy Fork sync setup); not part of this repo
-package.json
-package-lock.json
+.claude/settings.local.json

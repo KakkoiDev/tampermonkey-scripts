@@ -1,0 +1,29 @@
+{
+  "locale": "en",
+  "scripts": [
+    {
+      "file": "gmeet-pp.user.js",
+      "id": "513815",
+      "visibility": "public",
+      "name": "Gmeet++"
+    },
+    {
+      "file": "github-pr-load-all-comments.user.js",
+      "id": "564954",
+      "visibility": "public",
+      "name": "GitHub PR Load All Comments"
+    },
+    {
+      "file": "langfinity-loby-defaults.user.js",
+      "id": "557742",
+      "visibility": "public",
+      "name": "Langfinity Loby Defaults"
+    },
+    {
+      "file": "slack-ai-translate.user.js",
+      "id": "581056",
+      "visibility": "unlisted",
+      "name": "Slack AI Translate"
+    }
+  ]
+}
