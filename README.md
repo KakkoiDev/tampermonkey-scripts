@@ -58,3 +58,7 @@ git config core.hooksPath .githooks
 ```
 
 Requires Node (the hook runs `tools/bump-version.mjs`).
+
+## Local development (live reload)
+
+Edit a script on disk and reload the page to see changes - no copy-paste into Tampermonkey. See [DEVELOPMENT.md](DEVELOPMENT.md).
