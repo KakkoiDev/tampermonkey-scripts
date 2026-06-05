@@ -19,7 +19,7 @@ Small userscripts that bolt new features onto sites you already use - Google, Gi
 | [Langfinity Loby Defaults](scripts/langfinity-loby-defaults.user.js) | Turns off mic & camera in the Langfinity lobby and remembers your last-used name | `langfinity.ai/meeting` | [Greasy Fork](https://greasyfork.org/en/scripts/557742) |
 | [Slack AI Translate](scripts/slack-ai-translate.user.js) | Adds an English/Japanese translation button to Slack messages and the composer | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581056) (unlisted - direct link) |
 | [Slack Auto-remove Preview](scripts/slack-auto-remove-preview.user.js) | Automatically removes link previews on your own Slack messages | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581085) (unlisted - direct link) |
-| [Google Emoji Blast](scripts/google-emoji-blast.user.js) | Adds a button to the Google home page that blasts emoji across the screen | `www.google.com` | not yet published |
+| [Google Emoji Blast](scripts/google-emoji-blast.user.js) | Adds a button to the Google home page that blasts emoji across the screen | `www.google.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581196) (unlisted - direct link) |
 <!-- scripts:end -->
 
 **Just want to use one?** Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension, click the Greasy Fork link for any script above, and hit *Install*. That's the whole thing - no coding required.

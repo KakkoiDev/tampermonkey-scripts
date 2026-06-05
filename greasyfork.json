@@ -45,8 +45,8 @@
     },
     {
       "file": "scripts/google-emoji-blast.user.js",
-      "id": null,
-      "visibility": "public",
+      "id": "581196",
+      "visibility": "unlisted",
       "name": "Google Emoji Blast",
       "blurb": "Adds a button to the Google home page that blasts emoji across the screen"
     }
