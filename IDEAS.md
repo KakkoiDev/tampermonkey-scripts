@@ -26,3 +26,20 @@
   - in the top nav bar, next to "Files Changed", add a "Copy Diff" button
   - when pressing the button, briefly open a tab to pr-url.diff and copy it content to the clipboard
   - then close the tab.
+
+7. GitHub Copy Title with Link to PR:
+  - add a button similar to the one that copies the PR branch name. the button is place right after the pen button to edit the title
+  - that button when clicked copies the PR title and the link [PR title](link)
+  - let's confirm that this works both on Notion and Slack
+  - the goal is to share links easily.
+
+8. Notion Page Copy Title with Link to page:
+  - add a button similar to the one that copies the PR branch name, but following the Notion design system. the button is placed right after the page title. 
+  - that button when clicked copies the page title and the link [Page title](link)
+  - let's confirm that this works both on Notion and Slack
+  - the goal is to share links easily.
+
+9. When creating a script, add the target website favicon.
+  - Check how it was done for previous scripts
+  - add to both released scripts and local dev scripts (for better identification in the dashboard)
+  - fix existing scripts (released and dev)
