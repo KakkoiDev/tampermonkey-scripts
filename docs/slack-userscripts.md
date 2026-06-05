@@ -20,6 +20,10 @@ window.probe = () =>
     .map((b) => ({ aria: b.getAttribute('aria-label'), qa: b.getAttribute('data-qa') }))
     .filter((x) => /KEYWORD/i.test(`${x.aria} ${x.qa}`));
 ```
+Gotchas when probing:
+- **Run it in the page, not a userscript sandbox.** The DevTools console context dropdown (top-left of the Console) must be `top`; if it's set to an installed userscript you'll get `probe is not defined`.
+- **Copy clean output** with `copy(JSON.stringify(probe('edit'), null, 2))` - it puts JSON on your clipboard. Copying straight from the console scrollback comes out garbled.
+- **One element's markup**: right-click it -> Inspect -> Copy -> **Copy element** (not a big ancestor).
 
 ## Confirm dialogs are shared
 - Destructive actions open a dialog whose buttons are **generic**: confirm = `button[data-qa="dialog_go"]`, cancel = `dialog_cancel`, close = `dialog_close`. Identical across *every* dialog (delete message, leave channel, ...).
@@ -30,6 +34,12 @@ Slack shows a single confirm dialog at a time. Batch operations must be sequenti
 
 ## Author-only controls
 Some controls (e.g. the remove-preview "x") render only for the message author, so you can act on any you find without an ownership check.
+
+## Editing a message
+There's no API - drive Slack's own UI (see `scripts/slack-quick-edit.user.js`):
+1. Hover the message (dispatch `mouseover` on `[data-qa="message_container"]`) to render its toolbar, then click the ⋮ `[data-qa="more_message_actions"]`.
+2. In the popup, click the **Edit message** item. It has no stable `data-qa`, so match `[role="menuitem"]` by text (English). Its presence doubles as the ownership test - only your own messages have it, so if it's absent, the message isn't yours: bail.
+3. After a *programmatic* open, **focus the edit box** (`[data-feat="edit_composer"]`) or Slack's native keys won't fire. Then **Cmd/Ctrl+Enter saves, Esc cancels** - simpler and more robust than clicking the (data-qa-less) Save button.
 
 ## Confirmed selectors
 | Thing | Selector |
