@@ -42,6 +42,13 @@
       "visibility": "unlisted",
       "name": "Slack Auto-remove Preview",
       "blurb": "Automatically removes link previews on your own Slack messages"
+    },
+    {
+      "file": "scripts/google-emoji-blast.user.js",
+      "id": null,
+      "visibility": "public",
+      "name": "Google Emoji Blast",
+      "blurb": "Adds a button to the Google home page that blasts emoji across the screen"
     }
   ]
 }
