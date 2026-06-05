@@ -15,14 +15,14 @@
   - tabs now add 7 spaces
   - when pressing <Enter> to go to a new line, if a todo emoji is on that line: go the next line, keep space indent, auto-add a :white_square: emoji
 
-4. Slack Auto-remove Preview:
+4. [DONE] Slack Auto-remove Preview:
   - When a preview is detected, if I own it, click on the x to delete it.
 
 5. Slack MarkItDown:
   - create a button in the header of channels, in the header of thread and in the hover menu of message to copy through MarkItDown. The goal is to preserve structure and links.
   - The button should only copy the content that we expect is to copy: channel, thread, message. Not the navigation or the right-side notification menu.
 
-6. GitHub Show/Copy PR diff:
+6. [DONE] GitHub Show/Copy PR diff:
   - in the top nav bar, next to "Files Changed", add a "Copy Diff" button
   - when pressing the button, briefly open a tab to pr-url.diff and copy it content to the clipboard
   - then close the tab.
@@ -39,7 +39,7 @@
   - let's confirm that this works both on Notion and Slack
   - the goal is to share links easily.
 
-9. When creating a script, add the target website favicon.
+9. [DONE] When creating a script, add the target website favicon.
   - Check how it was done for previous scripts
   - add to both released scripts and local dev scripts (for better identification in the dashboard)
   - fix existing scripts (released and dev)
