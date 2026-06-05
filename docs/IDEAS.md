@@ -1,6 +1,6 @@
-1. Slack quick edit:
-  - when click on my own messages, enter edit mode
-  - when click outside the box, save edits
+1. [DONE] Slack quick edit:
+  - double-click your own message to enter edit mode
+  - save with Cmd/Ctrl+Enter (Slack native); the original click-outside-to-save was dropped as redundant
 
 2. Slack Self DM:
   - Like the forward option in the hover on message but will directly DM to myself without confirmation
