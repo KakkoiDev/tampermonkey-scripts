@@ -24,3 +24,12 @@ The loaded file's own header is IGNORED at runtime - the loader is what Tampermo
 - Use the absolute on-disk path for the `file://` require.
 
 Full guide and gotchas: [DEVELOPMENT.md](DEVELOPMENT.md). Publishing: [PUBLISHING.md](PUBLISHING.md) + the `greasyfork` skill.
+
+## Placing UI on obfuscated DOM (Google, Slack, Notion, ...)
+
+Sites with hashed/minified class names (e.g. Google's `lnXdpd`) will burn you if you guess selectors. Before writing or adjusting where a script injects UI:
+
+1. **Get the real element first** - ask the user for the target's `outerHTML`, or render the page headless and inspect it (Puppeteer is installed under `skills/greasyfork/scripts/node_modules`: load the URL, inject the library + script via `page.evaluate` to bypass page CSP, then screenshot).
+2. **Anchor on stable attributes** - `aria-label`, `name`, `role`, `data-qa` - never hashed classes.
+3. **Overlay without reflow** - position the injected element `absolute`/`fixed` against the anchor's rect; in-flow insertion shifts the page (it pushed Google's logo down).
+4. **Verify with a screenshot before committing** - don't ship placement you haven't seen.

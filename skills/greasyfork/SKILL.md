@@ -14,6 +14,9 @@ Publish and keep userscripts in sync on Greasy Fork from a git repo. Run the scr
 ## Before publishing: test with a dev loader
 New scripts are tested locally via a **dev loader** - a tiny Tampermonkey script that `@require`s the file from disk (see [DEVELOPMENT.md](../../DEVELOPMENT.md)). **Whenever you create a new `scripts/*.user.js`, always produce its filled-in dev loader block** so it can be tested before publishing. The loaded file's header is ignored at runtime, so copy every `@match`, `@grant`, `@connect`, and external `@require` onto the loader (CDN `@require`s before the `file://` line).
 
+## Placing UI on obfuscated sites
+When a script injects UI into a site with hashed class names (Google, Slack, Notion), don't guess selectors. Get the target element's `outerHTML` from the user, or render the page headless with Puppeteer and screenshot, before committing placement. Anchor on stable attributes (`aria-label`, `name`, `role`, `data-qa`), never hashed classes, and position overlays `absolute`/`fixed` so they don't shift the page. Fuller checklist in the repo's CLAUDE.md; Slack specifics in [docs/slack-userscripts.md](../../docs/slack-userscripts.md).
+
 ## The model (read [references/greasyfork-model.md](references/greasyfork-model.md) before writing)
 - **No write API.** Reads use the public JSON API (`api.greasyfork.org/en/scripts/<id>.json`). Writes (register, set-sync, set-visibility) are done by driving the real site in a local browser, because Cloudflare is bound to the user's IP - it must run on the user's machine.
 - **`@version` must increase** on every change or Greasy Fork ignores the update (a no-op). The host repo's `pre-commit` hook handles this.
