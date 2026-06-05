@@ -41,6 +41,22 @@ There's no API - drive Slack's own UI (see `scripts/slack-quick-edit.user.js`):
 2. In the popup, click the **Edit message** item. It has no stable `data-qa`, so match `[role="menuitem"]` by text (English). Its presence doubles as the ownership test - only your own messages have it, so if it's absent, the message isn't yours: bail.
 3. After a *programmatic* open, **focus the edit box** (`[data-feat="edit_composer"]`) or Slack's native keys won't fire. Then **Cmd/Ctrl+Enter saves, Esc cancels** - simpler and more robust than clicking the (data-qa-less) Save button.
 
+## Editing inside the composer (Todo Emoji)
+
+Built `scripts/slack-todo-emoji.user.js` against the Quill composer (`.ql-editor` - the same element for the main box, the thread box, and the edit box). DOM shape:
+- **Emoji are `<img class="emoji">`, not Unicode text.** `data-id` / `data-title` / `data-stringify-text` all hold the shortcode (`:white_check_mark:`); `data-stringify-text` is what Slack saves; the glyph is a CSS `background-image` (`…/16.0/apple-large/<codepoint>@2x.png`) and `src` is a shared 1x1 transparent gif. `class="emoji"` is stable - anchor on it, read the shortcode from `data-id`.
+- **Lines are plain `<p>`; indentation is literal leading spaces** (`white-space: pre-wrap` keeps them). No list markup.
+
+Quill mechanics that cost real debugging time - it owns the DOM, so you fight its model, not the DOM:
+- **Embeds are wrapped in `U+FEFF` cursor anchors.** An emoji's `<p>` has zero-width `\uFEFF` chars around the `<img>`, so `textContent` is never `''` even for a box-only line. Strip `\uFEFF` (not just space / `\u00a0`) in every "is this line empty?" check, or detection silently fails. This one was invisible until a logged `textContent` showed `"\uFEFF\uFEFF"`.
+- **Quill honors a single-node `selectNode`, but ignores programmatic multi-node `Range`s.** `selectNode(oneNode)` + `execCommand('insertText'|'insertHTML')` reliably *replaces that node* (this is why click-to-cycle works). `selectNodeContents(p)` or a hand-built sub-range is ignored - Quill edits at its own caret instead. So the reliable edit primitive is **select exactly one node and replace it**.
+- **You can't place the caret before a leading inline embed.** Collapse a range before the first `<img>` and Quill normalizes it to *after* the embed, so a caret-insert lands after the box. To put spaces before a leading box, *replace the box node* (`selectNode(img)` -> insertText spaces -> insertHTML the box back) or grow an existing leading text node; never caret-insert there.
+- **`insertHTML` trims leading whitespace; `insertText` preserves it.** Use `insertText` for indentation spaces; use `insertHTML` for the emoji `<img>` - Quill re-parses it into its blot from `data-id`, rebuilding the visual, so you don't hardcode the asset URL (read the versioned base off an existing `.emoji` only for the rare keep-raw-node case). Same DOM-write path `slack-ai-translate` relies on.
+- **Preserve the caret by its distance from the line end.** When an edit only changes *leading* content (indent), the text from the caret to the end of the line is invariant: record that length before, walk back that many chars from the end after. Survives Quill re-rendering the line (saved node references don't).
+- **React to a newline without binding a key.** A `MutationObserver` catching a new `<p>` fires however the line was made - Enter, Shift+Enter, or whatever the "Enter sends" setting is. If Enter *sends*, no `<p>` appears, so nothing fires and the message just sends. Settings-agnostic.
+
+All of the above was found by **instrumenting, not guessing** - temporary `console.log` of the line's `outerHTML` and which branch ran, pasted back from logged-in Slack ([Debugging on a logged-in site](DEVELOPMENT.md#debugging-on-a-logged-in-site)).
+
 ## Confirmed selectors
 | Thing | Selector |
 |---|---|
@@ -53,5 +69,7 @@ There's no API - drive Slack's own UI (see `scripts/slack-quick-edit.user.js`):
 | "Edit message" menu item | no stable `data-qa` - match `[role="menuitem"]` by text "Edit message" (English) |
 | Active edit box (while editing) | container `[data-qa="message_editor"]`; textarea `[data-feat="edit_composer"]` |
 | Edit Save / Cancel | inside the editor, no `data-qa`: Save = `button.c-button--primary`, Cancel = `button.c-button--outline` (or save natively with Cmd/Ctrl+Enter) |
+| Composer emoji | `img.emoji` - shortcode in `data-id` / `data-stringify-text`; glyph is a CSS `background-image` (`…/<codepoint>@2x.png`), `src` is a 1x1 gif |
+| Composer line / indent | each line is a `<p>`; indentation is literal leading spaces (no list markup) |
 
 Slack ships UI changes often - if a selector stops matching, re-run the discovery probe.

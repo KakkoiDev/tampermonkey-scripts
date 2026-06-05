@@ -103,5 +103,13 @@ await b.close();
 ```
 Caveat: headless gets the **logged-out** page - great for public pages (e.g. the Google homepage), useless for anything behind auth (Slack). For those, get the DOM from the user (Inspect -> Copy element) instead.
 
+## Debugging on a logged-in site
+
+You can't see an authenticated page (headless is logged out), so **the user is your eyes - ask them for the DOM, and instrument rather than guess**. Two kinds of ask:
+- **Static structure** - ask for the target's `outerHTML` (right-click -> Inspect -> Copy -> **Copy element**, not a big ancestor). Anchor selectors on what you see, never on a guess.
+- **Runtime state you can't get from static HTML** - hover-only controls, hidden characters, or *which branch of your code actually ran*. Drop a temporary `console.log` (the element's `outerHTML`, a flag, the caret node) and have the user paste the output. Console context must be `top` (see [slack-userscripts.md](slack-userscripts.md#discovering-selectors)).
+
+When a fix "doesn't work," resist patching blind a second time - **log the state and read it**. Two of the nastier `slack-todo-emoji` bugs (Quill's invisible `\uFEFF` embed anchors; Quill ignoring programmatic multi-node ranges) were impossible to see in the static DOM and only surfaced once the relevant `textContent` / code path was logged. Strip the instrumentation before committing.
+
 ## Site-specific notes
 - **Slack** (`app.slack.com`) - selectors, shared confirm-dialog scoping, SPA patterns, the discovery probe, and the message-edit flow, learned building scripts: [slack-userscripts.md](slack-userscripts.md).

@@ -44,3 +44,4 @@ Sites with hashed/minified class names (e.g. Google's `lnXdpd`) will burn you if
 2. **Anchor on stable attributes** - `aria-label`, `name`, `role`, `data-qa` - never hashed classes.
 3. **Overlay without reflow** - position the injected element `absolute`/`fixed` against the anchor's rect; in-flow insertion shifts the page (it pushed Google's logo down).
 4. **Verify with a screenshot before committing** - don't ship placement you haven't seen.
+5. **For behavior bugs, instrument - don't re-guess** - static `outerHTML` won't reveal runtime state (hover-only UI, hidden chars like `\uFEFF`, which code path actually ran). On an auth-gated site you can't see, when a fix fails, add a temporary `console.log` and have the user paste it rather than patching blind a second time. See [Debugging on a logged-in site](docs/DEVELOPMENT.md#debugging-on-a-logged-in-site).
