@@ -12,7 +12,7 @@ metadata:
 Publish and keep userscripts in sync on Greasy Fork from a git repo. Run the scripts below from the **root of a userscript repo** that contains a `greasyfork.json` manifest.
 
 ## Before publishing: test with a dev loader
-New scripts are tested locally via a **dev loader** - a tiny Tampermonkey script that `@require`s the file from disk (see [DEVELOPMENT.md](../../DEVELOPMENT.md)). **Whenever you create a new `scripts/*.user.js`, always produce its filled-in dev loader block** so it can be tested before publishing. The loaded file's header is ignored at runtime, so copy every `@match`, `@grant`, `@connect`, and external `@require` onto the loader (CDN `@require`s before the `file://` line).
+New scripts are tested locally via a **dev loader** - a tiny Tampermonkey script that `@require`s the file from disk (see [DEVELOPMENT.md](../../docs/DEVELOPMENT.md)). **Whenever you create a new `scripts/*.user.js`, always produce its filled-in dev loader block** so it can be tested before publishing. The loaded file's header is ignored at runtime, so copy every `@match`, `@grant`, `@connect`, and external `@require` onto the loader (CDN `@require`s before the `file://` line).
 
 ## Placing UI on obfuscated sites
 When a script injects UI into a site with hashed class names (Google, Slack, Notion), don't guess selectors. Get the target element's `outerHTML` from the user, or render the page headless with Puppeteer and screenshot, before committing placement. Anchor on stable attributes (`aria-label`, `name`, `role`, `data-qa`), never hashed classes, and position overlays `absolute`/`fixed` so they don't shift the page. Fuller checklist in the repo's CLAUDE.md; Slack specifics in [docs/slack-userscripts.md](../../docs/slack-userscripts.md).

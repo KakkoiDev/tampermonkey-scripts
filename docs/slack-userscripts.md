@@ -1,6 +1,6 @@
 # Writing userscripts for Slack
 
-Notes for building Tampermonkey userscripts against Slack's web app (`app.slack.com`), learned while building [`slack-auto-remove-preview.user.js`](../scripts/slack-auto-remove-preview.user.js). Iterate with the [live-reload loop](../DEVELOPMENT.md).
+Notes for building Tampermonkey userscripts against Slack's web app (`app.slack.com`), learned while building [`slack-auto-remove-preview.user.js`](../scripts/slack-auto-remove-preview.user.js). Iterate with the [live-reload loop](DEVELOPMENT.md).
 
 ## Slack is a React SPA
 - Navigation never reloads the page. Match `https://app.slack.com/*` and drive everything from a `MutationObserver` on `document.body` with `{ childList: true, subtree: true }`.

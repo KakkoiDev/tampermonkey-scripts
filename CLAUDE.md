@@ -23,7 +23,7 @@ The loaded file's own header is IGNORED at runtime - the loader is what Tampermo
 - Put external `@require` (CDN libs) BEFORE the `@require file://` line, in dependency order.
 - Use the absolute on-disk path for the `file://` require.
 
-Full guide and gotchas: [DEVELOPMENT.md](DEVELOPMENT.md). Publishing: [PUBLISHING.md](PUBLISHING.md) + the `greasyfork` skill.
+Full guide and gotchas: [DEVELOPMENT.md](docs/DEVELOPMENT.md). Publishing: [PUBLISHING.md](docs/PUBLISHING.md) + the `greasyfork` skill.
 
 ## Placing UI on obfuscated DOM (Google, Slack, Notion, ...)
 

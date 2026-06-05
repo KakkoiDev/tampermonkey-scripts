@@ -1,6 +1,6 @@
 # Publishing & using as a template
 
-This repo publishes its userscripts to [Greasy Fork](https://greasyfork.org/) and doubles as a reusable template for managing your own. Day-to-day building lives in the [README](README.md) and [DEVELOPMENT.md](DEVELOPMENT.md); this doc covers release and reuse.
+This repo publishes its userscripts to [Greasy Fork](https://greasyfork.org/) and doubles as a reusable template for managing your own. Day-to-day building lives in the [README](../README.md) and [DEVELOPMENT.md](DEVELOPMENT.md); this doc covers release and reuse.
 
 ## How publishing works
 
@@ -15,7 +15,7 @@ Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with th
 
 ## Managing publishing
 
-`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The bundled **`greasyfork` skill** (in [`skills/greasyfork/`](skills/greasyfork/); discovered by Claude Code via `~/.claude/skills/`, and by pi/Codex/OpenCode via the repo's [`.agents/skills/`](.agents/skills/)) drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
+`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The bundled **`greasyfork` skill** (in [`skills/greasyfork/`](../skills/greasyfork/); discovered by Claude Code via `~/.claude/skills/`, and by pi/Codex/OpenCode via the repo's [`.agents/skills/`](../.agents/skills/)) drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
 
 - **verify** (read-only, no login): check that every script's local `@version` matches the published and raw-served versions.
   `node skills/greasyfork/scripts/verify.mjs`

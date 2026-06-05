@@ -61,7 +61,7 @@ In Tampermonkey, click the **+** to create a new script, then replace it with a 
 // ==/UserScript==
 ```
 
-Copy **every** `@grant`, `@connect`, and `@require` from the real script onto the loader - the loaded file's own header is ignored. Details and the gotchas that bite people: **[DEVELOPMENT.md](DEVELOPMENT.md)**.
+Copy **every** `@grant`, `@connect`, and `@require` from the real script onto the loader - the loaded file's own header is ignored. Details and the gotchas that bite people: **[DEVELOPMENT.md](docs/DEVELOPMENT.md)**.
 
 ### 3. The loop
 
@@ -71,6 +71,6 @@ Edit the `.user.js` file -> reload the page -> your change is live. That's it.
 
 ## More
 
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - full local-dev guide, troubleshooting, and site-specific notes.
-- **[PUBLISHING.md](PUBLISHING.md)** - publishing to Greasy Fork and using this repo as a template.
-- **[IDEAS.md](IDEAS.md)** - the backlog.
+- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - full local-dev guide, troubleshooting, and site-specific notes.
+- **[PUBLISHING.md](docs/PUBLISHING.md)** - publishing to Greasy Fork and using this repo as a template.
+- **[IDEAS.md](docs/IDEAS.md)** - the backlog.
