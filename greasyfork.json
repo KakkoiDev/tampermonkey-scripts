@@ -59,7 +59,7 @@
     },
     {
       "file": "scripts/slack-todo-emoji.user.js",
-      "id": null,
+      "id": "581231",
       "visibility": "unlisted",
       "name": "Slack Todo Emoji",
       "blurb": "Todo checkboxes in the Slack composer: double-click to add, click to cycle status, Tab indents, Enter continues the list"

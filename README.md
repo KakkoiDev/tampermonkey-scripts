@@ -22,7 +22,7 @@ Small userscripts that bolt new features onto sites you already use - Google, Gi
 | [Slack Auto-remove Preview](scripts/slack-auto-remove-preview.user.js) | Automatically removes link previews on your own Slack messages | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581085) (unlisted - direct link) |
 | [Google Emoji Blast](scripts/google-emoji-blast.user.js) | Adds a button to the Google home page that blasts emoji across the screen | `www.google.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581196) (unlisted - direct link) |
 | [Slack Quick Edit](scripts/slack-quick-edit.user.js) | Double-click your own Slack message to edit it (Cmd/Ctrl+Enter saves) | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581216) (unlisted - direct link) |
-| [Slack Todo Emoji](scripts/slack-todo-emoji.user.js) | Todo checkboxes in the Slack composer: double-click to add, click to cycle status, Tab indents, Enter continues the list | `app.slack.com` | not yet published |
+| [Slack Todo Emoji](scripts/slack-todo-emoji.user.js) | Todo checkboxes in the Slack composer: double-click to add, click to cycle status, Tab indents, Enter continues the list | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581231) (unlisted - direct link) |
 <!-- scripts:end -->
 
 **Just want to use one?** Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension, click the Greasy Fork link for any script above, and hit *Install*. That's the whole thing - no coding required.
