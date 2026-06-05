@@ -9,7 +9,7 @@ There is no write API for Greasy Fork. Updates flow by Greasy Fork **pulling** t
 1. Edit a `.user.js` file.
 2. Commit. A `pre-commit` hook bumps `@version` to today's date (`YYYY.MM.DD`, with a `.N` suffix for same-day re-commits). Greasy Fork ignores any update whose `@version` is not incremented, so this is mandatory.
 3. Push to `main`.
-4. A repo webhook pings Greasy Fork, which re-fetches the raw file and publishes the new version (subject to a ~5 min GitHub raw CDN cache).
+4. A repo webhook pings Greasy Fork to re-fetch the raw file (subject to a ~5 min GitHub raw CDN cache). In practice the webhook is unreliable - if `verify` shows `DRIFT` after a push, force the pull with `set-sync` (see [Sync troubleshooting](#sync-troubleshooting)).
 
 Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with the raw URL `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<file>.user.js` and sync type "Automatic". `@downloadURL` / `@updateURL` are intentionally absent: Greasy Fork strips them and serves updates from its own URLs.
 
@@ -49,3 +49,12 @@ git config core.hooksPath .githooks
 ```
 
 Requires Node (the hook runs `tools/bump-version.mjs`).
+
+## Sync troubleshooting
+
+After a push, run `verify` (no login needed): `node skills/greasyfork/scripts/verify.mjs`. Each script shows three versions - `local` (your file), `raw` (what GitHub serves), `published` (what Greasy Fork serves):
+
+- **`raw` behind `local`** - the push hasn't reached GitHub's raw CDN yet (~5 min), or you didn't push.
+- **`published` behind `raw`** - Greasy Fork hasn't re-pulled. The webhook is best-effort and frequently misses; don't wait it out - force it: `node skills/greasyfork/scripts/set-sync.mjs <id>` (re-points sync + triggers an immediate pull), then re-run `verify`. (Observed repeatedly: a clean push left scripts in `DRIFT` until `set-sync` was run.)
+
+Timing for a brand-new script: `register` builds the listing from your **local** file (works before you push), but `set-sync` points Greasy Fork at the **raw GitHub URL**, so the file must be pushed first. Order: add the `greasyfork.json` entry with `id: null` -> `register` -> `git push` -> `set-sync <id>` -> `verify`.
