@@ -2,6 +2,8 @@
 
 Edit a userscript file on disk, reload the page, see the change - no copy-paste into Tampermonkey, no Greasy Fork round-trip. Confirmed working on Tampermonkey 5.5.6237 (Chrome).
 
+> **New script? Ship its dev loader with it.** Every script in `scripts/` is tested through a dev loader (below). When you add one, produce its loader block filled in from the script's own metadata - copy every `@match`, `@grant`, `@connect`, and external `@require` onto the loader, since the loaded file's header is ignored at runtime.
+
 ## Requirements
 - **Chrome** (or a Chromium browser). Loading userscripts from `file://` does **not** work in Firefox.
 - **Tampermonkey 5.5.0+** (it tracks local file changes on disk).
@@ -47,6 +49,14 @@ Example loader for `scripts/github-pr-copy-diff.user.js`:
 // @connect      github.com
 // @connect      githubusercontent.com
 // @require      file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/github-pr-copy-diff.user.js
+// ==/UserScript==
+```
+
+### Scripts that `@require` an external library
+If the real script pulls a library from a CDN (e.g. `scripts/google-emoji-blast.user.js` uses `emoji-blast`), the loader needs that `@require` **too**, listed **before** the `file://` line so the library loads first:
+```javascript
+// @require https://cdn.jsdelivr.net/npm/emoji-blast@0.11.0/dist/global.js
+// @require file:///ABSOLUTE/PATH/scripts/google-emoji-blast.user.js
 // ==/UserScript==
 ```
 
