@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Gmeet++
 // @namespace    http://tampermonkey.net/
-// @version      2026.06.04.1
+// @version      2026.06.05
 // @license      MIT
 // @description  Add nice-to-have features to Gmeet meetings
 // @author       KakkoiDev
 // @match        https://meet.google.com/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=google.com
+// @icon         https://meet.google.com/favicon.ico
 // @grant        none
 // ==/UserScript==
 

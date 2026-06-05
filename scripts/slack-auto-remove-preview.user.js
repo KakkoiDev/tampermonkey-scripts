@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Slack Auto-remove Preview
 // @namespace    http://tampermonkey.net/
-// @version      2026.06.04.1
+// @version      2026.06.05
 // @description  Auto-remove link previews (unfurls) on your own Slack messages
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=slack.com
+// @icon         https://app.slack.com/favicon.ico
 // @grant        none
 // @license      MIT
 // ==/UserScript==
