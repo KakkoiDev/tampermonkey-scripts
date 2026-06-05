@@ -16,6 +16,7 @@ Create a small **dev loader** userscript in Tampermonkey that pulls the real fil
 // ==UserScript==
 // @name         DEV: <Script Name> (local)
 // @namespace    http://tampermonkey.net/
+// @icon         <copy from the real script (target site favicon)>
 // @version      0.0.1
 // @description  dev loader
 // @match        <copy from the real script>
@@ -26,7 +27,7 @@ Create a small **dev loader** userscript in Tampermonkey that pulls the real fil
 // ==/UserScript==
 ```
 
-`@name`, `@namespace`, `@version`, and `@description` are all required by the userscript linter (`eslint-plugin-userscripts`, which Tampermonkey's editor runs) - `@description` is the one people forget; any text works. Everything else above is needed at runtime.
+`@name`, `@namespace`, `@version`, and `@description` are all required by the userscript linter (`eslint-plugin-userscripts`, which Tampermonkey's editor runs) - `@description` is the one people forget; any text works. Everything else above is needed at runtime. `@icon` is cosmetic - copy the real script's (the target-site favicon) so the loader is easy to spot in the Tampermonkey dashboard.
 
 Two things that bite people:
 - **The `@require`d file's own `// ==UserScript==` header is IGNORED** - Tampermonkey runs it as a plain library and reads metadata only from the **loader**. Copy *every* runtime key onto the loader: `@match`, **every** `@grant` (including `GM_*` like `GM_xmlhttpRequest` / `GM_setClipboard`), **`@connect`** (every domain a `GM_xmlhttpRequest` reaches, *including redirect targets*), `@run-at`, and any `@require`/`@resource` the script uses. Miss a `@grant` and that `GM_*` function is `undefined`; miss a `@connect` and the request is blocked.
@@ -41,6 +42,7 @@ Example loader for `scripts/github-pr-copy-diff.user.js`:
 // ==UserScript==
 // @name         DEV: GitHub PR Copy Diff (local)
 // @namespace    http://tampermonkey.net/
+// @icon         https://github.githubassets.com/favicons/favicon-dark.png
 // @version      0.0.1
 // @description  dev loader
 // @match        https://github.com/*

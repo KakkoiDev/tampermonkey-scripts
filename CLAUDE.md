@@ -8,6 +8,7 @@ When you create a new userscript (`scripts/*.user.js`), ALWAYS output its **dev 
 // ==UserScript==
 // @name         DEV: <Script Name> (local)
 // @namespace    http://tampermonkey.net/
+// @icon         <target site favicon, copied from the script>
 // @version      0.0.1
 // @description  dev loader
 // @match        <every @match from the script>
@@ -24,6 +25,10 @@ The loaded file's own header is IGNORED at runtime - the loader is what Tampermo
 - Use the absolute on-disk path for the `file://` require.
 
 Full guide and gotchas: [DEVELOPMENT.md](docs/DEVELOPMENT.md). Publishing: [PUBLISHING.md](docs/PUBLISHING.md) + the `greasyfork` skill.
+
+## New scripts: target-site `@icon`
+
+Every script (and its dev loader) carries an `@icon` of the target site's favicon, so it's identifiable in the Tampermonkey dashboard. Put it right after `@namespace`. Patterns already used in this repo: a direct favicon URL (`https://github.githubassets.com/favicons/favicon-dark.png`), Google's favicon service (`https://www.google.com/s2/favicons?sz=64&domain=<site>`), or an inline `data:` URI of the logo.
 
 ## Placing UI on obfuscated DOM (Google, Slack, Notion, ...)
 
