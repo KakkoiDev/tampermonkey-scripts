@@ -79,5 +79,29 @@ Tip: add `console.log('[my-script] vN loaded')` and bump `N` to confirm reloads 
 ## Relationship to production
 The loader is **dev-only** and lives only in your Tampermonkey - it is not part of this repo. The real `.user.js` file is what gets published: it syncs to Greasy Fork via the [`greasyfork` skill](../skills/greasyfork/) (see the README). Same source file, two consumption paths - local loader for development, Greasy Fork raw URL for release.
 
+## Icons
+Every script gets an `@icon` (the target site's favicon) so it's identifiable in the Tampermonkey dashboard - on the real script **and** its dev loader.
+- Prefer the site's own stable favicon: `https://<host>/favicon.ico` (e.g. `https://app.slack.com/favicon.ico`, `https://meet.google.com/favicon.ico`).
+- Verify before committing: `curl -s -o /dev/null -w "%{http_code} %{content_type}" -L <url>` must return `200` and an `image/*` type.
+- No `/favicon.ico`? Read the site's `<link rel="icon">` (`curl -sL <site> | grep -i 'rel="[^"]*icon'`), but skip version-hashed asset paths (e.g. `a.slack-edge.com/e6a93c1/...`) - they rot.
+- Avoid Google's `s2/favicons` proxy - Tampermonkey often won't render it in the dashboard. Inline `data:` URI is the always-works fallback.
+
+## Verify on the real page (headless)
+When you can't eyeball a change - or to check element placement on an obfuscated site without your own browser - drive headless Chrome with the Puppeteer the `greasyfork` skill already installs. Load the page and inject the library + your script via `page.evaluate` (it runs in the page's JS context, so it bypasses the site's CSP the way Tampermonkey does), then screenshot and look:
+```js
+// save under skills/greasyfork/scripts/ (so 'puppeteer' resolves); run from the repo root
+import puppeteer from 'puppeteer';
+import { readFileSync } from 'node:fs';
+const lib = await (await fetch('https://cdn.jsdelivr.net/npm/<dep>')).text(); // only if the script @requires one
+const src = readFileSync('scripts/<name>.user.js', 'utf8');
+const b = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+const p = await b.newPage();
+await p.goto('https://example.com/', { waitUntil: 'networkidle2' });
+await p.evaluate(lib); await p.evaluate(src);
+await p.screenshot({ path: '/tmp/out.png' });
+await b.close();
+```
+Caveat: headless gets the **logged-out** page - great for public pages (e.g. the Google homepage), useless for anything behind auth (Slack). For those, get the DOM from the user (Inspect -> Copy element) instead.
+
 ## Site-specific notes
-- **Slack** (`app.slack.com`) - selectors, shared confirm-dialog scoping, SPA patterns, and the discovery probe, learned building scripts: [slack-userscripts.md](slack-userscripts.md).
+- **Slack** (`app.slack.com`) - selectors, shared confirm-dialog scoping, SPA patterns, the discovery probe, and the message-edit flow, learned building scripts: [slack-userscripts.md](slack-userscripts.md).
