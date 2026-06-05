@@ -49,6 +49,13 @@
       "visibility": "unlisted",
       "name": "Google Emoji Blast",
       "blurb": "Adds a button to the Google home page that blasts emoji across the screen"
+    },
+    {
+      "file": "scripts/slack-quick-edit.user.js",
+      "id": null,
+      "visibility": "unlisted",
+      "name": "Slack Quick Edit",
+      "blurb": "Double-click your own Slack message to edit it (Cmd/Ctrl+Enter saves)"
     }
   ]
 }
