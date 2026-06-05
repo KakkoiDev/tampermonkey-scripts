@@ -38,5 +38,10 @@ Some controls (e.g. the remove-preview "x") render only for the message author, 
 | Remove "x" on a v2 work-object unfurl (Google Docs/Drive/Figma) | `[data-qa="message_attachment_v2_delete"] button` |
 | "Remove preview?" confirm | `[data-qa="dialog"][aria-label="Remove preview?"] button[data-qa="dialog_go"]` |
 | Message composer input | `.ql-editor` (Quill) |
+| One message (row) | `[data-qa="message_container"]` |
+| Message hover ⋮ more-actions | `[data-qa="more_message_actions"]` |
+| "Edit message" menu item | no stable `data-qa` - match `[role="menuitem"]` by text "Edit message" (English) |
+| Active edit box (while editing) | container `[data-qa="message_editor"]`; textarea `[data-feat="edit_composer"]` |
+| Edit Save / Cancel | inside the editor, no `data-qa`: Save = `button.c-button--primary`, Cancel = `button.c-button--outline` (or save natively with Cmd/Ctrl+Enter) |
 
 Slack ships UI changes often - if a selector stops matching, re-run the discovery probe.
