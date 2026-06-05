@@ -1,10 +1,14 @@
-# Tampermonkey scripts
+# Tampermonkey Scripts
 
-Userscripts by KakkoiDev, version-controlled here and published on Greasy Fork. The repo doubles as a reusable template for managing your own userscripts (see [Use as a template](#use-as-a-template)).
+> **Vibe code features into your favorite websites!**
 
-## Scripts
+![Emoji blast on the Google home page](docs/demo.gif)
 
-<sub>Auto-generated from `greasyfork.json` by the pre-commit hook (`tools/gen-readme.mjs`); do not hand-edit between the markers.</sub>
+Small userscripts that bolt new features onto sites you already use - Google, GitHub, Slack, Google Meet. Each one is a single file. Build your own with AI: edit the file, reload the page, see it live. No build step, nothing to compile.
+
+## What's inside
+
+<sub>Auto-generated from `greasyfork.json` - don't hand-edit between the markers.</sub>
 
 <!-- scripts:start -->
 | Script | What it does | Runs on | Install |
@@ -15,56 +19,57 @@ Userscripts by KakkoiDev, version-controlled here and published on Greasy Fork. 
 | [Langfinity Loby Defaults](scripts/langfinity-loby-defaults.user.js) | Turns off mic & camera in the Langfinity lobby and remembers your last-used name | `langfinity.ai/meeting` | [Greasy Fork](https://greasyfork.org/en/scripts/557742) |
 | [Slack AI Translate](scripts/slack-ai-translate.user.js) | Adds an English/Japanese translation button to Slack messages and the composer | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581056) (unlisted - direct link) |
 | [Slack Auto-remove Preview](scripts/slack-auto-remove-preview.user.js) | Automatically removes link previews on your own Slack messages | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581085) (unlisted - direct link) |
+| [Google Emoji Blast](scripts/google-emoji-blast.user.js) | Adds a button to the Google home page that blasts emoji across the screen | `www.google.com` | not yet published |
 <!-- scripts:end -->
 
-## How publishing works
+**Just want to use one?** Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension, click the Greasy Fork link for any script above, and hit *Install*. That's the whole thing - no coding required.
 
-There is no write API for Greasy Fork. Updates flow by Greasy Fork **pulling** the raw file from this repo:
+## Build your own
 
-1. Edit a `.user.js` file.
-2. Commit. A `pre-commit` hook bumps `@version` to today's date (`YYYY.MM.DD`, with a `.N` suffix for same-day re-commits). Greasy Fork ignores any update whose `@version` is not incremented, so this is mandatory.
-3. Push to `main`.
-4. A repo webhook pings Greasy Fork, which re-fetches the raw file and publishes the new version (subject to a ~5 min GitHub raw CDN cache).
+The fun part. You edit a `.user.js` file on your machine, and Tampermonkey runs it on the live website. Reload the page to see each change.
 
-Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with the raw URL `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<file>.user.js` and sync type "Automatic". `@downloadURL` / `@updateURL` are intentionally absent: Greasy Fork strips them and serves updates from its own URLs.
+### 1. Set up once
 
-## Managing publishing
+- Install **[Tampermonkey](https://www.tampermonkey.net/)** in **Chrome** (or any Chromium browser - Firefox can't load scripts from local files).
+- Go to `chrome://extensions`, open Tampermonkey's **Details**, and turn on **Allow User Scripts** and **Allow access to file URLs**, then set **Site access -> On all sites**:
 
-`greasyfork.json` maps each local file to its Greasy Fork script id and visibility. The bundled **`greasyfork` skill** (in [`skills/greasyfork/`](skills/greasyfork/); discovered by Claude Code via `~/.claude/skills/`, and by pi/Codex/OpenCode via the repo's [`.agents/skills/`](.agents/skills/)) drives Greasy Fork from this manifest (owner/repo/branch are derived from `git remote`, nothing hardcoded):
+  ![Tampermonkey extension settings](docs/extension-settings.png)
 
-- **verify** (read-only, no login): check that every script's local `@version` matches the published and raw-served versions.
-  `node skills/greasyfork/scripts/verify.mjs`
-- **set-sync**: configure sync-from-URL + Automatic and trigger an immediate sync.
-  `node skills/greasyfork/scripts/set-sync.mjs [id|file|all]`
-- **register**: publish a new script (visibility from the manifest) and write its id back.
-  `node skills/greasyfork/scripts/register.mjs <file.user.js>`
-- **status**: list which scripts Greasy Fork has set up to sync.
+- Clone this repo and turn on the version hook (needs [Node](https://nodejs.org/)):
 
-The write tools (register/set-sync/status) use a local headful browser (no API; Cloudflare requires your machine/IP) and a persisted login profile. `verify` uses only the public JSON API. See the skill's README for one-time setup.
+  ```sh
+  git config core.hooksPath .githooks
+  ```
 
-## Use as a template
+### 2. Load a script from disk
 
-1. Fork/clone, replace the `.user.js` files with your own.
-2. Edit `greasyfork.json`: one entry per script (`file`, `id` (`null` until published), `visibility`, `name`).
-3. Enable the version hook and the bundled skill:
-   ```sh
-   git config core.hooksPath .githooks
-   ln -s "$PWD/skills/greasyfork" ~/.claude/skills/greasyfork   # Claude Code global discovery
-   npm install --prefix skills/greasyfork/scripts              # deps for the browser tools (verify needs none)
-   ```
-   pi / Codex / OpenCode auto-discover the skill via the committed `.agents/skills/greasyfork` symlink - no setup needed.
-4. Publish/sync with the `greasyfork` skill, then set up the per-user Greasy Fork webhook on your repo (Settings -> Webhooks) using the URL at `greasyfork.org/en/users/webhook-info`.
+In Tampermonkey, click the **+** to create a new script, then replace it with a tiny *dev loader* that points at the real file on your machine:
 
-## Setup after clone
+![Creating a dev loader in Tampermonkey](docs/local-development-editor-setup.png)
 
-The version-bump hook lives in `.githooks/` (version-controlled). Git's hooks path is local config and is not cloned, so on a fresh clone run once:
-
-```sh
-git config core.hooksPath .githooks
+```javascript
+// ==UserScript==
+// @name         DEV: <script name> (local)
+// @namespace    http://tampermonkey.net/
+// @version      0.0.1
+// @description  dev loader
+// @match        <copy from the real script>
+// @grant        <copy EVERY @grant from the real script>
+// @connect      <copy every @connect, if it has any>
+// @require      file:///absolute/path/to/scripts/<script>.user.js
+// ==/UserScript==
 ```
 
-Requires Node (the hook runs `tools/bump-version.mjs`).
+Copy **every** `@grant`, `@connect`, and `@require` from the real script onto the loader - the loaded file's own header is ignored. Details and the gotchas that bite people: **[DEVELOPMENT.md](DEVELOPMENT.md)**.
 
-## Local development (live reload)
+### 3. The loop
 
-Edit a script on disk and reload the page to see changes - no copy-paste into Tampermonkey. See [DEVELOPMENT.md](DEVELOPMENT.md).
+Edit the `.user.js` file -> reload the page -> your change is live. That's it.
+
+> New here? [`scripts/google-emoji-blast.user.js`](scripts/google-emoji-blast.user.js) (the emoji button in the GIF above) is the simplest one to copy from: `@grant none`, about 40 lines.
+
+## More
+
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - full local-dev guide, troubleshooting, and site-specific notes.
+- **[PUBLISHING.md](PUBLISHING.md)** - publishing to Greasy Fork and using this repo as a template.
+- **[IDEAS.md](IDEAS.md)** - the backlog.
