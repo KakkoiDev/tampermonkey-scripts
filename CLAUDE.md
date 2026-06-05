@@ -28,7 +28,13 @@ Full guide and gotchas: [DEVELOPMENT.md](docs/DEVELOPMENT.md). Publishing: [PUBL
 
 ## New scripts: target-site `@icon`
 
-Every script (and its dev loader) carries an `@icon` of the target site's favicon, so it's identifiable in the Tampermonkey dashboard. Put it right after `@namespace`. Patterns already used in this repo: a direct favicon URL (`https://github.githubassets.com/favicons/favicon-dark.png`), Google's favicon service (`https://www.google.com/s2/favicons?sz=64&domain=<site>`), or an inline `data:` URI of the logo.
+Every script (and its dev loader) carries an `@icon` of the target site's favicon, so it's identifiable in the Tampermonkey dashboard. Put it right after `@namespace`. Always fetch a real icon for a new script - never ship without one, never guess the URL.
+
+How to get the right URL:
+1. Prefer the site's own stable favicon: `https://<target-host>/favicon.ico` (e.g. `https://app.slack.com/favicon.ico`, `https://meet.google.com/favicon.ico`).
+2. Verify before committing - `curl -s -o /dev/null -w "%{http_code} %{content_type}" -L <url>` must return `200` and an `image/*` type.
+3. No `/favicon.ico`? Read the site's `<link rel="icon">`: `curl -sL <site> | grep -i 'rel="[^"]*icon'` - but skip version-hashed asset paths (e.g. `a.slack-edge.com/e6a93c1/...`), they rot.
+4. Avoid Google's `s2/favicons` proxy - Tampermonkey often won't render it in the dashboard. Last resort: an inline `data:` URI of the logo (always renders, no network).
 
 ## Placing UI on obfuscated DOM (Google, Slack, Notion, ...)
 
