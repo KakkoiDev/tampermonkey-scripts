@@ -2,7 +2,8 @@
 
 > **Vibe code features into your favorite websites!**
 
-![Emoji blast on the Google home page](docs/demo.gif)
+<img src="docs/demo.gif" alt="Emoji blast on the Google home page" width="480">
+
 
 Small userscripts that bolt new features onto sites you already use - Google, GitHub, Slack, Google Meet. Each one is a single file. Build your own with AI: edit the file, reload the page, see it live. No build step, nothing to compile.
 
