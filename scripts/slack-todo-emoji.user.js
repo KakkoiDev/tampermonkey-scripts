@@ -1,0 +1,291 @@
+// ==UserScript==
+// @name         Slack Todo Emoji
+// @namespace    http://tampermonkey.net/
+// @icon         https://app.slack.com/favicon.ico
+// @version      2026.06.05
+// @description  Todo checkboxes in the Slack composer: double-click to add one, click to cycle status, Tab indents, Enter continues the list
+// @author       KakkoiDev
+// @match        https://app.slack.com/*
+// @grant        none
+// @license      MIT
+// ==/UserScript==
+
+// Slack renders every composer emoji as
+//   <img class="emoji" data-id=":code:" data-title=":code:" data-stringify-text=":code:"
+//        alt="… emoji" src="<1x1 gif>" style="background-image:url(…/<codepoint>@2x.png)">
+// data-id is the stable shortcode; data-stringify-text is what Slack saves. We insert/cycle by
+// feeding that <img> through execCommand (the path Slack uses for paste), so Quill re-parses it
+// into its own emoji blot from data-id. Quill wraps each emoji embed in U+FEFF cursor anchors, so
+// emptiness checks must ignore those. Quill also ignores programmatic multi-node Ranges but honors
+// a single-node selectNode (that's why cycling works), so indent/outdent select one node and replace it.
+// Lines are plain <p>; indentation is literal leading spaces (lists use a 7-space sub-item indent).
+
+(function () {
+    'use strict';
+
+    const EDITOR = '.ql-editor';   // every Slack composer (main, thread, edit) is a Quill .ql-editor
+    const EMOJI = 'img.emoji';
+    const INDENT = ' '.repeat(7);  // matches the existing 7-space sub-item indent
+    const IGNORE = /[ \u00a0\uFEFF]/g;        // spaces, nbsp, and Quill's U+FEFF embed anchors
+    const LEAD = /^[ \u00a0\uFEFF]*/;         // leading run of the above
+    const GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // every emoji's src
+
+    // Status loop (IDEAS #3): ⬜ -> ▶️ -> ✅ -> ⏸️ -> ❌ -> ⬜
+    const CYCLE = [
+        { code: ':white_square:', cp: '2b1c', alt: 'white square emoji' },
+        { code: ':arrow_forward:', cp: '25b6-fe0f', alt: 'arrow forward emoji' },
+        { code: ':white_check_mark:', cp: '2705', alt: 'white check mark emoji' },
+        { code: ':double_vertical_bar:', cp: '23f8-fe0f', alt: 'double vertical bar emoji' },
+        { code: ':x:', cp: '274c', alt: 'cross mark emoji' },
+    ];
+    const BOX = CYCLE[0];                                  // the checkbox we insert
+    const byCode = new Map(CYCLE.map((e) => [e.code, e]));
+
+    const EXIT_ON_EMPTY = false; // when true, Enter on an empty checkbox ends the list instead of adding another
+    let muting = false;         // ignore our own edits in the line observer
+
+    // The cyclable checkboxes look clickable (pointer cursor).
+    const style = document.createElement('style');
+    style.textContent = CYCLE.map((e) => `${EDITOR} ${EMOJI}[data-id="${e.code}"]`).join(',') + ' { cursor: pointer; }';
+    (document.head || document.documentElement).appendChild(style);
+
+    // Read the live (versioned) asset path off a real emoji so we don't hardcode Slack's "16.0/apple-large".
+    function bgFor(entry) {
+        const same = document.querySelector(`${EMOJI}[data-id="${entry.code}"]`);
+        if (same) return same.style.backgroundImage;
+        const any = document.querySelector(EMOJI);
+        if (any) return any.style.backgroundImage.replace(/[^/]+@2x\.png/, `${entry.cp}@2x.png`);
+        return `url("https://a.slack-edge.com/production-standard-emoji-assets/16.0/apple-large/${entry.cp}@2x.png")`;
+    }
+
+    function emojiHTML(entry) {
+        const img = document.createElement('img');
+        img.className = 'emoji';
+        img.src = GIF;
+        img.alt = entry.alt;
+        img.setAttribute('data-id', entry.code);
+        img.setAttribute('data-title', entry.code);
+        img.setAttribute('data-stringify-text', entry.code);
+        img.style.backgroundImage = bgFor(entry);
+        return img.outerHTML;
+    }
+
+    function selectNode(node) {
+        const sel = window.getSelection();
+        const r = document.createRange();
+        r.selectNode(node);
+        sel.removeAllRanges();
+        sel.addRange(r);
+    }
+
+    // The first emoji of a line, ignoring leading whitespace-only text. null if the line doesn't start with one.
+    function firstEmoji(p) {
+        for (const n of p.childNodes) {
+            if (n.nodeType === Node.TEXT_NODE && n.textContent.replace(IGNORE, '') === '') continue;
+            return n.nodeType === Node.ELEMENT_NODE && n.matches(EMOJI) ? n : null;
+        }
+        return null;
+    }
+
+    // Leading real spaces before the first emoji (the indent to replicate), not the U+FEFF anchors.
+    function leadingIndent(p) {
+        let s = '';
+        for (const n of p.childNodes) {
+            if (n.nodeType === Node.TEXT_NODE) {
+                const ws = n.textContent.match(/^[ \u00a0]*/)[0];
+                s += ws;
+                if (ws.length < n.textContent.length) break;
+            } else break;
+        }
+        return s;
+    }
+
+    function isTodoLine(p) {
+        const em = firstEmoji(p);
+        return !!em && byCode.has(em.getAttribute('data-id'));
+    }
+
+    // A checkbox line with no text of its own (just indent + the emoji + Quill's anchors).
+    function isEmptyTodo(p) {
+        return isTodoLine(p)
+            && p.querySelectorAll(EMOJI).length === 1
+            && (p.textContent || '').replace(IGNORE, '') === '';
+    }
+
+    // The <p> line holding the caret, if it sits inside the given editor.
+    function currentLine(editor) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return null;
+        const range = sel.getRangeAt(0);
+        if (range.startContainer === editor) {
+            const child = editor.children[Math.min(range.startOffset, editor.children.length - 1)];
+            return child && child.tagName === 'P' ? child : null;
+        }
+        let node = range.startContainer;
+        while (node && node !== editor) {
+            if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P' && node.parentNode === editor) return node;
+            node = node.parentNode;
+        }
+        return null;
+    }
+
+    // Text characters from the caret to the end of the line (invariant when only leading spaces change).
+    function caretTail(p) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return 0;
+        const c = sel.getRangeAt(0);
+        const r = document.createRange();
+        r.setStart(c.startContainer, c.startOffset);
+        r.setEnd(p, p.childNodes.length);
+        return r.toString().length;
+    }
+
+    // Put the caret `tail` text-characters from the end of the line (mirror of caretTail).
+    function setCaretTail(p, tail) {
+        const sel = window.getSelection();
+        const texts = [];
+        const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+        for (let n; (n = walk.nextNode());) texts.push(n);
+        const r = document.createRange();
+        let rem = tail;
+        for (let i = texts.length - 1; i >= 0; i--) {
+            if (rem <= texts[i].length) {
+                r.setStart(texts[i], texts[i].length - rem);
+                r.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(r);
+                return;
+            }
+            rem -= texts[i].length;
+        }
+        r.setStart(p, 0);
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+    }
+
+    // --- click an emoji: advance it one step in the loop ---
+    document.addEventListener('click', (e) => {
+        const img = e.target.closest(EMOJI);
+        if (!img || !img.closest(EDITOR)) return;
+        const cur = byCode.get(img.getAttribute('data-id'));
+        if (!cur) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const next = CYCLE[(CYCLE.indexOf(cur) + 1) % CYCLE.length];
+        selectNode(img);
+        document.execCommand('insertHTML', false, emojiHTML(next)); // replaces the selected emoji
+    }, true);
+
+    // Slack builds the emoji's hover tooltip from title / data-title (the :shortcode:); strip them on the
+    // clickable boxes so hovering a checkbox doesn't show ":white_square:".
+    document.addEventListener('mouseover', (e) => {
+        const img = e.target.closest(EMOJI);
+        if (!img || !img.closest(EDITOR) || !byCode.has(img.getAttribute('data-id'))) return;
+        img.removeAttribute('title');
+        img.removeAttribute('data-title');
+    }, true);
+
+    // --- double-click empty space/text: insert a checkbox at the click point ---
+    document.addEventListener('dblclick', (e) => {
+        if (!e.target.closest(EDITOR)) return;
+        if (e.target.closest(EMOJI)) return; // double-clicking an emoji is two cycles, not an insert
+        const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+        if (!range) return;
+        const sel = window.getSelection();
+        sel.removeAllRanges();              // drop the word dblclick selected
+        sel.addRange(range);
+        document.execCommand('insertHTML', false, emojiHTML(BOX) + ' ');
+    });
+
+    // --- Tab / Shift+Tab: indent / outdent by up to 7 spaces. ---
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab' || e.metaKey || e.ctrlKey || e.altKey) return;
+        const editor = e.target.closest(EDITOR);
+        if (!editor) return;
+        if (document.querySelector('[data-qa*="suggestion"], [data-qa*="autocomplete"]')) return;
+        e.preventDefault();
+        const p = currentLine(editor);
+        if (!p) return;
+        const tail = caretTail(p); // remember the caret's distance from the line end, then restore it after editing
+
+        if (e.shiftKey) { // outdent: drop up to 7 leading spaces (fewer if that's all there is)
+            const first = p.firstChild;
+            if (!first || first.nodeType !== Node.TEXT_NODE) return;
+            const text = first.textContent;
+            const remove = Math.min(INDENT.length, text.match(LEAD)[0].length);
+            if (!remove) return;
+            const keep = text.slice(remove);
+            selectNode(first);                                            // single node: Quill honors this
+            if (keep) document.execCommand('insertText', false, keep);    // replace it minus the leading spaces
+            else document.execCommand('delete');
+            setCaretTail(p, tail);
+            return;
+        }
+
+        // indent the line's leading edge, regardless of caret position or text after the box
+        const first = p.firstChild;
+        if (first && first.nodeType === Node.TEXT_NODE) {  // grow the leading text node (proven path; box/text untouched)
+            selectNode(first);
+            document.execCommand('insertText', false, INDENT + first.textContent);
+            setCaretTail(p, tail);
+            return;
+        }
+        if (isTodoLine(p)) {                               // box is the first child: replace it, keep a separator after it
+            const bare = isEmptyTodo(p);
+            selectNode(firstEmoji(p));
+            document.execCommand('insertText', false, INDENT);
+            document.execCommand('insertHTML', false, emojiHTML(BOX) + (bare ? ' ' : ''));
+            setCaretTail(p, tail);
+            return;
+        }
+        document.execCommand('insertText', false, INDENT); // empty or non-todo line: indent at the caret
+    }, true);
+
+    // --- a new line was created: if the line above is a checkbox line, continue the list ---
+    function handleNewLine(newP) {
+        if (muting) return;
+        const prev = newP.previousElementSibling;
+        if (!prev || prev.tagName !== 'P' || !isTodoLine(prev)) return;
+        // only a clean "Enter at end of item" - the new line is still empty
+        if ((newP.textContent || '').replace(IGNORE, '') !== '' || newP.querySelector(EMOJI)) return;
+
+        muting = true;
+        setTimeout(() => {
+            try {
+                const sel = window.getSelection();
+                if (EXIT_ON_EMPTY && isEmptyTodo(prev)) {
+                    const r = document.createRange();   // empty checkbox + Enter -> end the list
+                    r.selectNodeContents(prev);
+                    sel.removeAllRanges();
+                    sel.addRange(r);
+                    document.execCommand('delete');
+                    return;
+                }
+                const r = document.createRange();       // continue: indent + a fresh checkbox on the new line
+                r.setStart(newP, 0);
+                r.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(r);
+                const indent = leadingIndent(prev);
+                if (indent) document.execCommand('insertText', false, indent);
+                document.execCommand('insertHTML', false, emojiHTML(BOX) + ' ');
+            } finally {
+                muting = false;
+            }
+        }, 0);
+    }
+
+    new MutationObserver((muts) => {
+        if (muting) return;
+        for (const m of muts) {
+            if (m.type !== 'childList') continue;
+            for (const node of m.addedNodes) {
+                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P'
+                    && node.parentElement && node.parentElement.classList.contains('ql-editor')) {
+                    handleNewLine(node);
+                }
+            }
+        }
+    }).observe(document.body, { childList: true, subtree: true });
+})();
