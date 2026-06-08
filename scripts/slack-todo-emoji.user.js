@@ -2,7 +2,7 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.06.05
+// @version      2026.06.08
 // @description  Todo checkboxes in the Slack composer: double-click to add one, click to cycle status, Tab indents, Enter continues the list
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -39,6 +39,7 @@
         { code: ':x:', cp: '274c', alt: 'cross mark emoji' },
     ];
     const BOX = CYCLE[0];                                  // the checkbox we insert
+    const STAR = { code: ':sparkles:', cp: '2728', alt: 'sparkles emoji' }; // importance flag, orthogonal to status
     const byCode = new Map(CYCLE.map((e) => [e.code, e]));
 
     const EXIT_ON_EMPTY = false; // when true, Enter on an empty checkbox ends the list instead of adding another
@@ -46,7 +47,7 @@
 
     // The cyclable checkboxes look clickable (pointer cursor).
     const style = document.createElement('style');
-    style.textContent = CYCLE.map((e) => `${EDITOR} ${EMOJI}[data-id="${e.code}"]`).join(',') + ' { cursor: pointer; }';
+    style.textContent = CYCLE.concat(STAR).map((e) => `${EDITOR} ${EMOJI}[data-id="${e.code}"]`).join(',') + ' { cursor: pointer; }';
     (document.head || document.documentElement).appendChild(style);
 
     // Read the live (versioned) asset path off a real emoji so we don't hardcode Slack's "16.0/apple-large".
@@ -87,6 +88,17 @@
         return null;
     }
 
+    // The line's status emoji: the first CYCLE emoji, tolerating a leading :sparkles: (old format).
+    function statusEmoji(p) {
+        for (const n of p.childNodes) {
+            if (n.nodeType === Node.TEXT_NODE && n.textContent.replace(IGNORE, '') === '') continue;
+            if (n.nodeType !== Node.ELEMENT_NODE || !n.matches(EMOJI)) return null;
+            if (n.getAttribute('data-id') === STAR.code) continue;   // the mark sits before the status - keep scanning
+            return byCode.has(n.getAttribute('data-id')) ? n : null;
+        }
+        return null;
+    }
+
     // Leading real spaces before the first emoji (the indent to replicate), not the U+FEFF anchors.
     function leadingIndent(p) {
         let s = '';
@@ -101,8 +113,7 @@
     }
 
     function isTodoLine(p) {
-        const em = firstEmoji(p);
-        return !!em && byCode.has(em.getAttribute('data-id'));
+        return !!statusEmoji(p);
     }
 
     // A checkbox line with no text of its own (just indent + the emoji + Quill's anchors).
@@ -110,6 +121,30 @@
         return isTodoLine(p)
             && p.querySelectorAll(EMOJI).length === 1
             && (p.textContent || '').replace(IGNORE, '') === '';
+    }
+
+    // The line's :sparkles: importance mark (kept right after the status emoji), or null.
+    function importantMark(p) {
+        return p.querySelector(`${EMOJI}[data-id="${STAR.code}"]`);
+    }
+
+    // Toggle the :sparkles: importance mark right after the status box (so every checkbox stays
+    // left-aligned), restoring the caret by its distance from the line end - the same edit-then-
+    // restore primitive Tab/Shift+Tab uses.
+    function toggleImportant(p) {
+        const tail = caretTail(p);
+        const mark = importantMark(p);
+        if (mark) {                                       // remove: single-node select + delete (Quill honors this)
+            selectNode(mark);
+            document.execCommand('delete');
+        } else {                                          // add: replace the status box with [status box][mark]
+            const status = statusEmoji(p);
+            if (!status) return;
+            const entry = byCode.get(status.getAttribute('data-id'));
+            selectNode(status);
+            document.execCommand('insertHTML', false, emojiHTML(entry) + emojiHTML(STAR));
+        }
+        setCaretTail(p, tail);
     }
 
     // The <p> line holding the caret, if it sits inside the given editor.
@@ -168,6 +203,17 @@
     document.addEventListener('click', (e) => {
         const img = e.target.closest(EMOJI);
         if (!img || !img.closest(EDITOR)) return;
+        const p = img.closest('p');
+
+        // alt+click: toggle the line's importance flag (a trailing :sparkles:), orthogonal to status
+        if (e.altKey) {
+            if (!p || !isTodoLine(p)) return;   // only meaningful on a checkbox line
+            e.preventDefault();
+            e.stopPropagation();
+            toggleImportant(p);
+            return;
+        }
+
         const cur = byCode.get(img.getAttribute('data-id'));
         if (!cur) return;
         e.preventDefault();
