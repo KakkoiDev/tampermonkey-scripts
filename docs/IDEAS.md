@@ -43,3 +43,10 @@
   - Check how it was done for previous scripts
   - add to both released scripts and local dev scripts (for better identification in the dashboard)
   - fix existing scripts (released and dev)
+
+10. Improve the Slack translation script:
+  - Add Anthropic + OpenAI key support (plus try to make it work for myself)
+  - Add local model support
+  - Add deterministic processing to ensure that the message's format will be preserved. Like a formating step before displaying to user.
+  - Add "see original" button
+  - Improve modal visual, make it look like a Slack modal
