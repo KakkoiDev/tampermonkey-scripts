@@ -63,6 +63,13 @@
       "visibility": "unlisted",
       "name": "Slack Todo Emoji",
       "blurb": "Todo checkboxes in the Slack composer: double-click to add, click to cycle status, Tab indents, Enter continues the list"
+    },
+    {
+      "file": "scripts/slack-composer-charcount.user.js",
+      "id": "581666",
+      "visibility": "unlisted",
+      "name": "Slack Composer Char Count",
+      "blurb": "Live character countdown in the Slack composer that warns before you hit the message limit"
     }
   ]
 }
