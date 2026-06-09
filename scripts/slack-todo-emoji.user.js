@@ -2,7 +2,7 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.06.08
+// @version      2026.06.09.1
 // @description  Todo checkboxes in the Slack composer: double-click to add one, click to cycle status, Tab indents, Enter continues the list
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -77,6 +77,22 @@
         r.selectNode(node);
         sel.removeAllRanges();
         sel.addRange(r);
+    }
+
+    // After a cycle-click swaps the emoji, Slack/Quill sometimes leaves the new <img>'s tile
+    // unpainted on long-lived, emoji-dense composers: data-id and background-image are correct
+    // (getComputedStyle confirms) but the pixels don't refresh until a save/scroll/focus forces a
+    // paint. Force it ourselves - flush layout, then promote the node to its own layer for one
+    // frame to trigger a composite.
+    function forceRepaint(line) {
+        if (!line) return;
+        requestAnimationFrame(() => {
+            const node = statusEmoji(line);
+            if (!node) return;
+            void node.offsetHeight;
+            node.style.transform = 'translateZ(0)';
+            requestAnimationFrame(() => { node.style.transform = ''; });
+        });
     }
 
     // The first emoji of a line, ignoring leading whitespace-only text. null if the line doesn't start with one.
@@ -221,6 +237,7 @@
         const next = CYCLE[(CYCLE.indexOf(cur) + 1) % CYCLE.length];
         selectNode(img);
         document.execCommand('insertHTML', false, emojiHTML(next)); // replaces the selected emoji
+        forceRepaint(p);
     }, true);
 
     // Slack builds the emoji's hover tooltip from title / data-title (the :shortcode:); strip them on the
