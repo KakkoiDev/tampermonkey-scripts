@@ -111,5 +111,27 @@ You can't see an authenticated page (headless is logged out), so **the user is y
 
 When a fix "doesn't work," resist patching blind a second time - **log the state and read it**. Two of the nastier `slack-todo-emoji` bugs (Quill's invisible `\uFEFF` embed anchors; Quill ignoring programmatic multi-node ranges) were impossible to see in the static DOM and only surfaced once the relevant `textContent` / code path was logged. Strip the instrumentation before committing.
 
+## Clipboard: rich + plain copy (one button, every paste target)
+
+When a "copy" button must paste well into both rich editors (Slack, Notion) and plain ones (markdown files, code editors), write **multiple clipboard flavors at once**. The clipboard holds several representations of one copy; each paste target picks the richest flavor it understands. Use `navigator.clipboard.write()` with a `ClipboardItem` (not `GM_setClipboard`, which writes a single plain flavor only):
+
+```js
+await navigator.clipboard.write([ new ClipboardItem({
+  'text/html':  new Blob([html],  { type: 'text/html'  }),
+  'text/plain': new Blob([label], { type: 'text/plain' }),
+}) ]);
+```
+
+Who reads what (learned building `github-pr-copy-title-link`):
+- **Slack, Notion chat** - consume `text/html`, render an `<a href>` as a named link. Never look at `text/plain`.
+- **VS Code `.md`, Notion pages** (smart "paste as link") - take `text/plain` as the link **text** and pull the URL from the `text/html` **href**, then build `[text](href)` themselves.
+- **Dumb editors** (plain `<textarea>`, basic editors) - read ONLY `text/plain`, insert it verbatim.
+
+The trap: if `text/plain` is *already* a full markdown link `[label](url)`, the smart editors wrap it **again** -> `[[label](url)](url)`. Fix: put the **bare label** in `text/plain` (no markdown), and let smart editors combine label + href. The full markdown belongs only in a no-`text/html` fallback (writeText), where nothing can double-wrap it.
+
+Hard limit - **one static payload can't satisfy both smart and dumb editors.** Dumb editors need the URL *inside* `text/plain`; smart editors treat `text/plain` as label-only and add the href separately. Same field, opposite needs. So bare-label `text/plain` loses the link in dumb editors (acceptable tradeoff), OR offer a modifier-key variant (alt+click, like `slack-todo-emoji`) that writes markdown-only with no `text/html` - clean in dumb/markdown editors, but then Slack pastes literal `[label](url)` text.
+
+Requirements: `navigator.clipboard.write` needs a secure context (https), transient user activation (call it from a click handler), and document focus. No GM grant needed; `@grant none` is fine since there's no `GM_*` call and no cross-origin fetch.
+
 ## Site-specific notes
 - **Slack** (`app.slack.com`) - selectors, shared confirm-dialog scoping, SPA patterns, the discovery probe, and the message-edit flow, learned building scripts: [slack-userscripts.md](slack-userscripts.md).
