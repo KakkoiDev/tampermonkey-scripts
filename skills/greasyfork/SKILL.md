@@ -4,7 +4,7 @@ description: Manage userscripts on Greasy Fork (greasyfork.org) from a git repo 
 license: MIT. See LICENSE.txt
 metadata:
   author: cyril.antoni
-  version: "1.0"
+  version: "1.1"
 ---
 
 # greasyfork
@@ -40,7 +40,7 @@ When a script injects UI into a site with hashed class names (Google, Slack, Not
 
 ## Recipes
 - **Did my push land?** -> `verify.mjs`. `OK` = local == published == raw. `DRIFT` = investigate (version not bumped, CDN lag ~5 min, or webhook not delivered).
-- **Publish a new script:** add an entry to `greasyfork.json` with `"id": null` and the desired `visibility` (`public`|`unlisted`|`library`) -> `register.mjs <file>` (creates the listing, writes the id back) -> `set-sync.mjs <id>` -> `verify.mjs`.
+- **Publish a new script:** push the `.user.js` to GitHub **first** (`set-sync`'s immediate sync fetches the raw URL and 404s if the file isn't there yet) -> add an entry to `greasyfork.json` with `"id": null` and the desired `visibility` (`public`|`unlisted`|`library`) -> `register.mjs <file>` (creates the listing, pastes the code, writes the id back into the manifest) -> `set-sync.mjs <id>` -> `verify.mjs` -> **commit the manifest and push** (the written-back id is what flips the README row from "not yet published" to the Greasy Fork link, via this repo's `gen-readme` pre-commit hook). New visibility usually matches its sibling scripts (the GitHub PR tools are `public`).
 - **Wire an already-published script:** ensure its entry has the real `id` -> `set-sync.mjs <id>`.
 
 ## Cautions
