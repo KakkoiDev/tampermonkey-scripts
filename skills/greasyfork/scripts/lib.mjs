@@ -50,8 +50,8 @@ export async function fetchRawVersion(url) {
 }
 
 // Set a published script to sync-from-URL (Automatic) and trigger an immediate
-// pull, by driving its Greasy Fork Admin page. Shared by set-sync.mjs and
-// release.mjs so the form selectors live in one place. Returns the flash text.
+// pull, by driving its Greasy Fork Admin page. Used by release.mjs. Returns the
+// flash text. The form selectors live here so there's one place to fix them.
 export async function syncScriptOnPage(page, s, info = repoInfo()) {
   const url = rawUrl(s.file, info);
   await page.goto(`${GF}/en/scripts/${s.id}/admin`, { waitUntil: 'networkidle2', timeout: 60000 });

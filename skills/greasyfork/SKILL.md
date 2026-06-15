@@ -18,7 +18,7 @@ New scripts are tested locally via a **dev loader** - a tiny Tampermonkey script
 When a script injects UI into a site with hashed class names (Google, Slack, Notion), don't guess selectors. Get the target element's `outerHTML` from the user, or render the page headless with Puppeteer and screenshot, before committing placement. Anchor on stable attributes (`aria-label`, `name`, `role`, `data-qa`), never hashed classes, and position overlays `absolute`/`fixed` so they don't shift the page. Fuller checklist in the repo's CLAUDE.md; Slack specifics in [docs/slack-userscripts.md](../../docs/slack-userscripts.md).
 
 ## The model (read [references/greasyfork-model.md](references/greasyfork-model.md) before writing)
-- **No write API.** Reads use the public JSON API (`api.greasyfork.org/en/scripts/<id>.json`). Writes (register, set-sync, set-visibility) are done by driving the real site in a local browser, because Cloudflare is bound to the user's IP - it must run on the user's machine.
+- **No write API.** Reads use the public JSON API (`api.greasyfork.org/en/scripts/<id>.json`). Writes (register, release/sync) are done by driving the real site in a local browser, because Cloudflare is bound to the user's IP - it must run on the user's machine.
 - **`@version` must increase** on every change or Greasy Fork ignores the update (a no-op). The host repo's `pre-commit` hook handles this.
 - **Sync model:** Greasy Fork *pulls* the raw GitHub URL. A per-user webhook (repo Settings -> Webhooks, URL from `greasyfork.org/en/users/webhook-info`) makes pushes near-immediate; otherwise periodic.
 - **`@downloadURL`/`@updateURL` are stripped** by Greasy Fork - leave them out.
@@ -32,8 +32,8 @@ When a script injects UI into a site with hashed class names (Google, Slack, Not
 | Task | Command | Auth |
 |---|---|---|
 | Check everything is in sync | `node skills/greasyfork/scripts/verify.mjs` | none |
-| Release after a push (sync drifted + verify) | `node skills/greasyfork/scripts/release.mjs [--push]` | browser |
-| Wire/refresh sync for scripts | `node skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` | browser |
+| Update after a push (sync drifted + verify) | `node skills/greasyfork/scripts/release.mjs [--push]` | browser |
+| Wire/re-point a script's sync URL | `node skills/greasyfork/scripts/release.mjs <id\|file\|all>` | browser |
 | Publish a new script | `node skills/greasyfork/scripts/register.mjs <file.user.js>` | browser |
 | List what's syncing | `node skills/greasyfork/scripts/status.mjs` | browser |
 
@@ -43,8 +43,8 @@ When a script injects UI into a site with hashed class names (Google, Slack, Not
 
 ## Recipes
 - **Did my push land?** -> `verify.mjs`. `OK` = local == published == raw. `DRIFT` = run `release.mjs` (the webhook never auto-pulls). If still drifting: `@version` not bumped, or raw CDN lag ~5 min.
-- **Publish a new script:** push the `.user.js` to GitHub **first** (`set-sync`'s immediate sync fetches the raw URL and 404s if the file isn't there yet) -> add an entry to `greasyfork.json` with `"id": null` and the desired `visibility` (`public`|`unlisted`|`library`) -> `register.mjs <file>` (creates the listing, pastes the code, writes the id back into the manifest) -> `set-sync.mjs <id>` -> `verify.mjs` -> **commit the manifest and push** (the written-back id is what flips the README row from "not yet published" to the Greasy Fork link, via this repo's `gen-readme` pre-commit hook). New visibility usually matches its sibling scripts (the GitHub PR tools are `public`).
-- **Wire an already-published script:** ensure its entry has the real `id` -> `set-sync.mjs <id>`.
+- **Publish a new script:** add an entry to `greasyfork.json` with `"id": null` and the desired `visibility` (`public`|`unlisted`|`library`) -> `register.mjs <file>` (creates the listing, pastes the code, writes the id back into the manifest) -> **commit the manifest and push** (the written-back id flips the README row from "not yet published" to the Greasy Fork link via the `gen-readme` pre-commit hook; the file must be pushed before the next step, since sync pulls the raw GitHub URL) -> `release.mjs <id>` (wires sync-from-URL + Automatic and pulls now, then verifies). New visibility usually matches its sibling scripts (the GitHub PR tools are `public`).
+- **Wire / re-point an already-published script** (e.g. after moving or renaming its file): ensure its `greasyfork.json` entry has the real `id` and correct `file`, then `release.mjs <id>`.
 
 ## Cautions
 - `register.mjs` creates a REAL listing. It refuses to run if the manifest entry already has an `id` (prevents duplicates). Confirm the new id afterward.

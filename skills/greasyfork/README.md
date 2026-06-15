@@ -24,8 +24,8 @@ Run from the root of a repo that contains a `greasyfork.json` ([schema](referenc
 | Task | Command |
 |---|---|
 | Check sync (read-only) | `node skills/greasyfork/scripts/verify.mjs` |
-| Release after a push (sync drifted + verify) | `node skills/greasyfork/scripts/release.mjs [--push]` |
-| Configure/refresh sync | `node skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` |
+| Update after a push (sync drifted + verify) | `node skills/greasyfork/scripts/release.mjs [--push]` |
+| Wire/re-point a script's sync URL | `node skills/greasyfork/scripts/release.mjs <id\|file\|all>` |
 | Publish a new script | `node skills/greasyfork/scripts/register.mjs <file.user.js>` |
 | List what's syncing | `node skills/greasyfork/scripts/status.mjs` |
 

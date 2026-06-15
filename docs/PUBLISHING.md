@@ -25,15 +25,14 @@ Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with th
 
 - **verify** (read-only, no login): check that every script's local `@version` matches the published and raw-served versions.
   `node skills/greasyfork/scripts/verify.mjs`
-- **release**: sync every script whose published version is behind the local file, then verify - the one-command post-push step (the webhook is dead, see below). `--push` pushes first.
-  `node skills/greasyfork/scripts/release.mjs [--push]`
-- **set-sync**: configure sync-from-URL + Automatic and trigger an immediate sync for specific scripts.
-  `node skills/greasyfork/scripts/set-sync.mjs [id|file|all]`
+- **release**: the single update mechanism (the webhook is dead, see below).
+  - `node skills/greasyfork/scripts/release.mjs [--push]` - after a push: sync every script whose published version is behind the local file, then verify. `--push` pushes first.
+  - `node skills/greasyfork/scripts/release.mjs <id|file|all>` - wire/re-point sync-from-URL + Automatic for those scripts and pull now (first sync of a new script, or after a move/rename).
 - **register**: publish a new script (visibility from the manifest) and write its id back.
   `node skills/greasyfork/scripts/register.mjs <file.user.js>`
 - **status**: list which scripts Greasy Fork has set up to sync.
 
-The write tools (register/set-sync/status) use a local headful browser (no API; Cloudflare requires your machine/IP) and a persisted login profile. `verify` uses only the public JSON API. See the skill's README for one-time setup.
+The write tools (register/release/status) use a local headful browser (no API; Cloudflare requires your machine/IP) and a persisted login profile. `verify` uses only the public JSON API. See the skill's README for one-time setup.
 
 ## Use as a template
 
@@ -46,7 +45,7 @@ The write tools (register/set-sync/status) use a local headful browser (no API; 
    npm install --prefix skills/greasyfork/scripts              # deps for the browser tools (verify needs none)
    ```
    pi / Codex / OpenCode auto-discover the skill via the committed `.agents/skills/greasyfork` symlink - no setup needed.
-4. Publish/sync with the `greasyfork` skill. You can set up the per-user Greasy Fork webhook (Settings -> Webhooks, URL at `greasyfork.org/en/users/webhook-info`) for auto-pull, but on this repo it returns 403 (see "How publishing works"), so plan to run `set-sync` after each push regardless.
+4. Publish/sync with the `greasyfork` skill. Don't bother with the per-user webhook for auto-pull - its endpoint 403s every push (see "How publishing works"); run `release` after each push instead.
 
 ## Setup after clone
 
@@ -63,7 +62,7 @@ Requires Node (the hook runs `tools/bump-version.mjs`).
 After a push, run `verify` (no login needed): `node skills/greasyfork/scripts/verify.mjs`. Each script shows three versions - `local` (your file), `raw` (what GitHub serves), `published` (what Greasy Fork serves):
 
 - **`raw` behind `local`** - the push hasn't reached GitHub's raw CDN yet (~5 min), or you didn't push.
-- **`published` behind `raw`** - Greasy Fork hasn't re-pulled. The webhook is dead (403, below), so auto-pull never fires; force it with `node skills/greasyfork/scripts/release.mjs` (syncs every drifted script + verifies), or `set-sync.mjs <id>` for one.
+- **`published` behind `raw`** - Greasy Fork hasn't re-pulled. The webhook is dead (403, below), so auto-pull never fires; force it with `node skills/greasyfork/scripts/release.mjs` (syncs every drifted script + verifies).
 
 ### The webhook is broken server-side (don't bother debugging it)
 
@@ -74,6 +73,6 @@ Diagnosed 2026-06-15: the per-user webhook endpoint `greasyfork.org/en/users/<id
 - Same 403 for JSON and form-encoded bodies, push and ping events, with and without a CSRF token.
 - The 403 carries Rails headers (`X-Runtime` ~4ms, `X-Request-Id`), so the request reaches GF's app and the app rejects it. GET on the path 404s (route is POST-only, so the URL is correct).
 
-The configured Payload URL matches exactly what `greasyfork.org/en/users/webhook-info` instructs (`application/json`, no secret), so there's nothing to re-point. Until Greasy Fork fixes their endpoint, `release` is the reliable path - it does what the webhook was supposed to.
+The configured Payload URL matched exactly what `greasyfork.org/en/users/webhook-info` instructs (`application/json`, no secret), so there was nothing to re-point. The dead webhook has been removed from the repo (it only 403-spammed every push); re-add it from `webhook-info` if Greasy Fork ever fixes the endpoint. Until then, `release` is the reliable path - it does what the webhook was supposed to.
 
-Timing for a brand-new script: `register` builds the listing from your **local** file (works before you push), but `set-sync` points Greasy Fork at the **raw GitHub URL**, so the file must be pushed first. Order: add the `greasyfork.json` entry with `id: null` -> `register` -> `git push` -> `set-sync <id>` -> `verify`.
+Timing for a brand-new script: `register` builds the listing from your **local** file (works before you push), but wiring sync points Greasy Fork at the **raw GitHub URL**, so the file must be pushed first. Order: add the `greasyfork.json` entry with `id: null` -> `register` -> commit + `git push` -> `release <id>` (wires sync + pulls + verifies).
