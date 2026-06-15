@@ -27,14 +27,14 @@
   - when pressing the button, briefly open a tab to pr-url.diff and copy it content to the clipboard
   - then close the tab.
 
-7. GitHub Copy Title with Link to PR:
+7. [DONE] GitHub Copy Title with Link to PR:
   - add a button similar to the one that copies the PR branch name. the button is place right after the pen button to edit the title
   - that button when clicked copies the PR title and the link [PR title](link)
   - let's confirm that this works both on Notion and Slack
   - the goal is to share links easily.
 
-8. Notion Page Copy Title with Link to page:
-  - add a button similar to the one that copies the PR branch name, but following the Notion design system. the button is placed right after the page title. 
+8. [SKIP - native exists] Notion Page Copy Title with Link to page:
+  - Notion's topbar already has a native "Copy link" button. A custom title+link button is redundant; not worth a near-duplicate. Its plain-text-gets-the-URL behavior is what we adopted for the GitHub button instead (idea #7).
   - that button when clicked copies the page title and the link [Page title](link)
   - let's confirm that this works both on Notion and Slack
   - the goal is to share links easily.

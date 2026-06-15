@@ -117,19 +117,18 @@ When a "copy" button must paste well into both rich editors (Slack, Notion) and 
 
 ```js
 await navigator.clipboard.write([ new ClipboardItem({
-  'text/html':  new Blob([html],  { type: 'text/html'  }),
-  'text/plain': new Blob([label], { type: 'text/plain' }),
+  'text/html':  new Blob([html], { type: 'text/html'  }), // <a href="url">Title</a>
+  'text/plain': new Blob([url],  { type: 'text/plain' }), // the bare URL
 }) ]);
 ```
 
-Who reads what (learned building `github-pr-copy-title-link`):
-- **Slack, Notion chat** - consume `text/html`, render an `<a href>` as a named link. Never look at `text/plain`.
-- **VS Code `.md`, Notion pages** (smart "paste as link") - take `text/plain` as the link **text** and pull the URL from the `text/html` **href**, then build `[text](href)` themselves.
-- **Dumb editors** (plain `<textarea>`, basic editors) - read ONLY `text/plain`, insert it verbatim.
+Put the **rich anchor in `text/html`** (so the label/title shows as the link text) and the **bare URL in `text/plain`**. Who reads what (learned building `github-pr-copy-title-link`, mirroring Notion's native "Copy link"):
+- **Slack, Notion** - consume `text/html`, render the `<a href>` as a named link showing the title. Never look at `text/plain`.
+- **Plain / dumb editors** (markdown files, `<textarea>`, anything with no rich paste) - read ONLY `text/plain` -> they get the **URL**, a working link, not unlinked title text.
 
-The trap: if `text/plain` is *already* a full markdown link `[label](url)`, the smart editors wrap it **again** -> `[[label](url)](url)`. Fix: put the **bare label** in `text/plain` (no markdown), and let smart editors combine label + href. The full markdown belongs only in a no-`text/html` fallback (writeText), where nothing can double-wrap it.
+The trap to avoid: do NOT put a full markdown link `[label](url)` in `text/plain`. Editors with "paste as link" (VS Code `.md`, Notion pages) treat `text/plain` as the link text and add the `text/html` href themselves, so a markdown `text/plain` gets wrapped **again** -> `[[label](url)](url)`. A bare URL in `text/plain` has nothing to double-wrap.
 
-Hard limit - **one static payload can't satisfy both smart and dumb editors.** Dumb editors need the URL *inside* `text/plain`; smart editors treat `text/plain` as label-only and add the href separately. Same field, opposite needs. So bare-label `text/plain` loses the link in dumb editors (acceptable tradeoff), OR offer a modifier-key variant (alt+click, like `slack-todo-emoji`) that writes markdown-only with no `text/html` - clean in dumb/markdown editors, but then Slack pastes literal `[label](url)` text.
+Tradeoff that remains: a smart md editor shows the **URL** as the link text, not the title (it used `text/plain`). Acceptable - the link works everywhere, and rich targets still show the title. If you instead want the title as the markdown label, put the bare *label* in `text/plain`, but then plain editors get unlinked text with no URL. Pick which matters; URL-in-plain is the better default.
 
 Requirements: `navigator.clipboard.write` needs a secure context (https), transient user activation (call it from a click handler), and document focus. No GM grant needed; `@grant none` is fine since there's no `GM_*` call and no cross-origin fetch.
 
