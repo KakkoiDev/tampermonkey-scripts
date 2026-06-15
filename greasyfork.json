@@ -73,6 +73,8 @@
     },
     {
       "file": "scripts/github-pr-copy-title-link.user.js",
+      "id": "582750",
+      "visibility": "public",
       "name": "GitHub PR Copy Title + Link",
       "blurb": "Adds a button by the PR title that copies the title + PR link, ready to paste as a link in Slack, Notion, or markdown"
     }
