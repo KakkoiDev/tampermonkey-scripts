@@ -2,7 +2,7 @@
 // @name         GitHub PR Copy Title + Link
 // @namespace    http://tampermonkey.net/
 // @icon         https://github.githubassets.com/favicons/favicon-dark.png
-// @version      2026.06.15.3
+// @version      2026.06.15.4
 // @description  Adds a button by the PR title that copies the title + link as a rich link (Slack/Notion) and markdown (MD files)
 // @author       KakkoiDev
 // @match        https://github.com/*
@@ -14,11 +14,10 @@
 // re-adds the button as the PR header re-renders.
 //
 // navigator.clipboard.write (not GM_setClipboard): we write BOTH text/html
-// (<a href>) and text/plain (the bare label) in one ClipboardItem. Slack and
-// Notion read the HTML and render a named link; markdown-aware editors (VS
-// Code, Notion pages) take the plain text as the link label and the HTML href
-// as the URL, building [label](url) themselves. text/plain is the bare label,
-// NOT markdown, so those editors don't double-wrap it (see copyTitleLink).
+// (<a href>) and text/plain (the URL) in one ClipboardItem. Slack and Notion
+// read the HTML and render a named link showing the title; plain-text targets
+// (markdown files, code editors, anything with no rich paste) get the URL - a
+// working link, not an unlinked title. Mirrors Notion's native "Copy link".
 // GM_setClipboard writes a single plain flavor only. No fetch -> no GM grants.
 
 (function() {
@@ -63,27 +62,25 @@
         const title = titleSpan.textContent.trim();
         const url = `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}`;
         const label = `${title} #${pr.number}`;
-        const markdown = `[${label}](${url})`;
         const html = `<a href="${esc(url)}">${esc(label)}</a>`;
 
-        // text/plain is the bare label, NOT markdown: editors with paste-as-link
-        // (VS Code, Notion pages) build a link from the plain text (label) + the
-        // text/html href. If text/plain were already markdown, they'd wrap it
-        // again -> [[label](url)](url). Slack / Notion chat ignore plain and
-        // render the html anchor. The no-html fallback below writes full
-        // markdown (nothing to double-wrap it there).
+        // text/plain is the URL, not the title: plain-text / dumb editors then
+        // paste a working link instead of unlinked title text. Slack / Notion
+        // ignore plain and render the html anchor (title as link text). Putting
+        // markdown here instead would make paste-as-link editors double-wrap it
+        // -> [[label](url)](url), so keep plain a bare URL.
         try {
             await navigator.clipboard.write([
                 new ClipboardItem({
                     'text/html': new Blob([html], { type: 'text/html' }),
-                    'text/plain': new Blob([label], { type: 'text/plain' }),
+                    'text/plain': new Blob([url], { type: 'text/plain' }),
                 }),
             ]);
             flash(btn);
         } catch (e) {
-            // Older browsers / no ClipboardItem: plain markdown only.
+            // Older browsers / no ClipboardItem: URL only.
             try {
-                await navigator.clipboard.writeText(markdown);
+                await navigator.clipboard.writeText(url);
                 flash(btn);
             } catch (e2) {
                 btn.title = 'Copy failed';
