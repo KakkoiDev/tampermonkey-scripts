@@ -9,7 +9,7 @@ There is no write API for Greasy Fork. Updates flow by Greasy Fork **pulling** t
 1. Edit a `.user.js` file.
 2. Commit. A `pre-commit` hook bumps `@version` to today's date (`YYYY.MM.DD`, with a `.N` suffix for same-day re-commits). Greasy Fork ignores any update whose `@version` is not incremented, so this is mandatory.
 3. Push to `main`.
-4. A repo webhook pings Greasy Fork to re-fetch the raw file (subject to a ~5 min GitHub raw CDN cache). In practice the webhook is unreliable - if `verify` shows `DRIFT` after a push, force the pull with `set-sync` (see [Sync troubleshooting](#sync-troubleshooting)).
+4. A repo webhook is supposed to ping Greasy Fork to re-fetch the raw file. In practice it does **not** work on this repo: every delivery returns **403** (verified 2026-06-15 via `gh api repos/<owner>/<repo>/hooks/<id>/deliveries` - all `push` events `403 Invalid HTTP Response`). So Greasy Fork never auto-pulls. Treat `set-sync` as a **required** release step after every push, not a fallback (see [Sync troubleshooting](#sync-troubleshooting)).
 
 Each script is wired on its Greasy Fork **Admin -> Source Syncing** page with the raw URL `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<file>.user.js` and sync type "Automatic". `@downloadURL` / `@updateURL` are intentionally absent: Greasy Fork strips them and serves updates from its own URLs.
 
@@ -38,7 +38,7 @@ The write tools (register/set-sync/status) use a local headful browser (no API; 
    npm install --prefix skills/greasyfork/scripts              # deps for the browser tools (verify needs none)
    ```
    pi / Codex / OpenCode auto-discover the skill via the committed `.agents/skills/greasyfork` symlink - no setup needed.
-4. Publish/sync with the `greasyfork` skill, then set up the per-user Greasy Fork webhook on your repo (Settings -> Webhooks) using the URL at `greasyfork.org/en/users/webhook-info`.
+4. Publish/sync with the `greasyfork` skill. You can set up the per-user Greasy Fork webhook (Settings -> Webhooks, URL at `greasyfork.org/en/users/webhook-info`) for auto-pull, but on this repo it returns 403 (see "How publishing works"), so plan to run `set-sync` after each push regardless.
 
 ## Setup after clone
 
@@ -55,6 +55,7 @@ Requires Node (the hook runs `tools/bump-version.mjs`).
 After a push, run `verify` (no login needed): `node skills/greasyfork/scripts/verify.mjs`. Each script shows three versions - `local` (your file), `raw` (what GitHub serves), `published` (what Greasy Fork serves):
 
 - **`raw` behind `local`** - the push hasn't reached GitHub's raw CDN yet (~5 min), or you didn't push.
-- **`published` behind `raw`** - Greasy Fork hasn't re-pulled. The webhook is best-effort and frequently misses; don't wait it out - force it: `node skills/greasyfork/scripts/set-sync.mjs <id>` (re-points sync + triggers an immediate pull), then re-run `verify`. (Observed repeatedly: a clean push left scripts in `DRIFT` until `set-sync` was run.)
+- **`published` behind `raw`** - Greasy Fork hasn't re-pulled. The webhook returns 403 on this repo so auto-pull never fires; don't wait it out - force it: `node skills/greasyfork/scripts/set-sync.mjs <id>` (re-points sync + triggers an immediate pull), then re-run `verify`. (Observed repeatedly: a clean push left scripts in `DRIFT` until `set-sync` was run.)
+  - Check the webhook itself: `gh api repos/<owner>/<repo>/hooks` shows `last_response`; `.../hooks/<id>/deliveries` lists per-push status codes. Persistent 403 likely means Greasy Fork's Cloudflare is rejecting GitHub's server-side POST, or the per-user webhook URL is stale (re-fetch from `greasyfork.org/en/users/webhook-info`). Until fixed, `set-sync` is the reliable path.
 
 Timing for a brand-new script: `register` builds the listing from your **local** file (works before you push), but `set-sync` points Greasy Fork at the **raw GitHub URL**, so the file must be pushed first. Order: add the `greasyfork.json` entry with `id: null` -> `register` -> `git push` -> `set-sync <id>` -> `verify`.

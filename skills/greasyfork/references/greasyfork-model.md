@@ -15,7 +15,7 @@ No API auth exists. `scripts/lib.mjs` launches Chromium with `userDataDir = ~/.c
 1. Script source is hosted at a public GitHub **raw** URL.
 2. Each script is set to **Source Syncing** with that URL + sync type **Automatic** (script's Admin page).
 3. Greasy Fork re-fetches and republishes when notified. `@version` **must increase** or the fetch is a silent no-op ("Greasy Fork will warn if it's not incremented when the code changes").
-4. A **per-user webhook** (`greasyfork.org/en/users/<id>-<name>/webhook`, content type `application/json`, push event, no secret) added to the repo (Settings -> Webhooks) makes pushes near-immediate. Without it, Automatic sync is periodic. The raw GitHub CDN can lag ~5 min.
+4. A **per-user webhook** (`greasyfork.org/en/users/<id>-<name>/webhook`, content type `application/json`, push event, no secret) added to the repo (Settings -> Webhooks) is *supposed* to make pushes near-immediate. **Reality (observed 2026-06-15):** every delivery returns `403 Invalid HTTP Response` (`gh api repos/<o>/<r>/hooks/<id>/deliveries`), so auto-sync never fires and `set-sync` must be run after each push. Likely Greasy Fork's Cloudflare rejecting GitHub's server-side POST (consistent with the IP-binding above), or a stale webhook URL (re-fetch from `greasyfork.org/en/users/webhook-info`). The raw GitHub CDN can also lag ~5 min independently.
 5. Files must be edited **in place** (committed, then modified) so webhook payloads show them as *modified*, not *added* - newly *added* files in a push are skipped by Greasy Fork's webhook handler.
 
 ## Moving or renaming a script's file
