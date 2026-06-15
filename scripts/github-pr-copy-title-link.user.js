@@ -2,8 +2,8 @@
 // @name         GitHub PR Copy Title + Link
 // @namespace    http://tampermonkey.net/
 // @icon         https://github.githubassets.com/favicons/favicon-dark.png
-// @version      2026.06.15.4
-// @description  Adds a button by the PR title that copies the title + link as a rich link (Slack/Notion) and markdown (MD files)
+// @version      2026.06.15.5
+// @description  Adds a button by the PR title that copies the PR link - a named link showing the title in Slack/Notion, the plain URL in editors
 // @author       KakkoiDev
 // @match        https://github.com/*
 // @grant        none
