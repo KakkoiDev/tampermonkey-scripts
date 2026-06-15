@@ -70,6 +70,11 @@
       "visibility": "unlisted",
       "name": "Slack Composer Char Count",
       "blurb": "Live character countdown in the Slack composer that warns before you hit the message limit"
+    },
+    {
+      "file": "scripts/github-pr-copy-title-link.user.js",
+      "name": "GitHub PR Copy Title + Link",
+      "blurb": "Adds a button by the PR title that copies the title + PR link, ready to paste as a link in Slack, Notion, or markdown"
     }
   ]
 }
