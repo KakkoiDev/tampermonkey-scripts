@@ -49,6 +49,36 @@ export async function fetchRawVersion(url) {
   return (await r.text()).match(VER)?.[1] ?? null;
 }
 
+// Set a published script to sync-from-URL (Automatic) and trigger an immediate
+// pull, by driving its Greasy Fork Admin page. Shared by set-sync.mjs and
+// release.mjs so the form selectors live in one place. Returns the flash text.
+export async function syncScriptOnPage(page, s, info = repoInfo()) {
+  const url = rawUrl(s.file, info);
+  await page.goto(`${GF}/en/scripts/${s.id}/admin`, { waitUntil: 'networkidle2', timeout: 60000 });
+  if (!(await page.$('#script_sync_identifier'))) {
+    return { url, ok: false, message: '#script_sync_identifier not found (not your script / layout changed)' };
+  }
+  await page.$eval('#script_sync_identifier', (el, v) => {
+    el.value = v;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, url);
+  await page.$eval('#script_sync_type_automatic', (el) => {
+    el.checked = true;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  const btn = await page.$('input[name="update-and-sync"]');
+  await btn.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }).catch(() => {}),
+    btn.click(),
+  ]);
+  const message = await page.evaluate(() => {
+    const g = (sel) => document.querySelector(sel)?.innerText?.trim();
+    return g('.flash') || g('.notice') || g('.alert') || g('[role=alert]') || '(no flash message)';
+  });
+  return { url, ok: true, message };
+}
+
 export async function launchBrowser() {
   const { default: puppeteer } = await import('puppeteer');
   const browser = await puppeteer.launch({

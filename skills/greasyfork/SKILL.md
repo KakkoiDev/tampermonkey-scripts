@@ -32,14 +32,17 @@ When a script injects UI into a site with hashed class names (Google, Slack, Not
 | Task | Command | Auth |
 |---|---|---|
 | Check everything is in sync | `node skills/greasyfork/scripts/verify.mjs` | none |
+| Release after a push (sync drifted + verify) | `node skills/greasyfork/scripts/release.mjs [--push]` | browser |
 | Wire/refresh sync for scripts | `node skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` | browser |
 | Publish a new script | `node skills/greasyfork/scripts/register.mjs <file.user.js>` | browser |
 | List what's syncing | `node skills/greasyfork/scripts/status.mjs` | browser |
 
 `verify` is the source of truth and works even if the browser tools break - prefer it for "did it sync?".
 
+**The webhook is dead - always `release` after a push.** Greasy Fork's per-user webhook endpoint returns 403 to every POST (server-side at GF, not fixable from our config - full diagnosis in [references/greasyfork-model.md](references/greasyfork-model.md) and docs/PUBLISHING.md), so auto-pull on push never happens. `release.mjs` forces the pull GF should have done (waits for the raw CDN, syncs every script whose published version is behind, re-verifies).
+
 ## Recipes
-- **Did my push land?** -> `verify.mjs`. `OK` = local == published == raw. `DRIFT` = investigate (version not bumped, CDN lag ~5 min, or webhook not delivered).
+- **Did my push land?** -> `verify.mjs`. `OK` = local == published == raw. `DRIFT` = run `release.mjs` (the webhook never auto-pulls). If still drifting: `@version` not bumped, or raw CDN lag ~5 min.
 - **Publish a new script:** push the `.user.js` to GitHub **first** (`set-sync`'s immediate sync fetches the raw URL and 404s if the file isn't there yet) -> add an entry to `greasyfork.json` with `"id": null` and the desired `visibility` (`public`|`unlisted`|`library`) -> `register.mjs <file>` (creates the listing, pastes the code, writes the id back into the manifest) -> `set-sync.mjs <id>` -> `verify.mjs` -> **commit the manifest and push** (the written-back id is what flips the README row from "not yet published" to the Greasy Fork link, via this repo's `gen-readme` pre-commit hook). New visibility usually matches its sibling scripts (the GitHub PR tools are `public`).
 - **Wire an already-published script:** ensure its entry has the real `id` -> `set-sync.mjs <id>`.
 

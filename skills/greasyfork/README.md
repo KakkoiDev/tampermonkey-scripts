@@ -24,12 +24,13 @@ Run from the root of a repo that contains a `greasyfork.json` ([schema](referenc
 | Task | Command |
 |---|---|
 | Check sync (read-only) | `node skills/greasyfork/scripts/verify.mjs` |
+| Release after a push (sync drifted + verify) | `node skills/greasyfork/scripts/release.mjs [--push]` |
 | Configure/refresh sync | `node skills/greasyfork/scripts/set-sync.mjs [id\|file\|all]` |
 | Publish a new script | `node skills/greasyfork/scripts/register.mjs <file.user.js>` |
 | List what's syncing | `node skills/greasyfork/scripts/status.mjs` |
 
 ## Troubleshooting
-- **DRIFT in verify** - `@version` wasn't bumped, the GitHub raw CDN is lagging (~5 min), or the webhook didn't deliver (repo Settings -> Webhooks -> Recent Deliveries).
+- **DRIFT in verify** - run `release.mjs`; Greasy Fork's webhook returns 403 to every push (server-side, never auto-pulls - see [greasyfork-model.md](references/greasyfork-model.md)). If still drifting after `release`: `@version` wasn't bumped, or the GitHub raw CDN is lagging (~5 min).
 - **Stuck at login** - delete `~/.cache/greasyfork/profile` and re-run to start a clean login.
 - **Browser tool breaks after a Greasy Fork redesign** - the DOM selectors are centralized in `scripts/*.mjs` and documented in [references/greasyfork-model.md](references/greasyfork-model.md). `verify` (public API) keeps working regardless.
 
