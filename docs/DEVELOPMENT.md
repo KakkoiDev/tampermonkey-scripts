@@ -132,5 +132,28 @@ Tradeoff that remains: a smart md editor shows the **URL** as the link text, not
 
 Requirements: `navigator.clipboard.write` needs a secure context (https), transient user activation (call it from a click handler), and document focus. No GM grant needed; `@grant none` is fine since there's no `GM_*` call and no cross-origin fetch.
 
+## Feeding fake camera/mic into a meeting (`getUserMedia` override)
+
+A userscript **cannot** create an OS-level virtual device (that needs native software like OBS Virtual Cam / VB-Cable). It **can** override `navigator.mediaDevices.getUserMedia` so a meeting tab receives a synthetic `MediaStream` instead of real hardware. Learned building `virtual-media-injector` (plays a video into webcam+mic during a call, with a live toggle back to the real camera). Confirmed on Google Meet.
+
+The shape that survives a mid-call toggle: hand the app **one stable stream you own**, then swap its content live. The app acquires media once and never re-acquires, so a direct "return the clip stream" only works if armed before joining.
+- **video track** = `canvas.captureStream(30)`; a `requestAnimationFrame` loop draws either the real camera `<video>` (passthrough) or the clip `<video>`, chosen by a `playing` flag.
+- **audio track** = a WebAudio `MediaStreamDestination`; the real mic and the clip each pass through a `GainNode`, and you crossfade by flipping the gains.
+
+The gotchas, in the order they bite:
+- **Override through `unsafeWindow`.** Any `GM_*` grant sandboxes the script, so patch `unsafeWindow.navigator.mediaDevices.getUserMedia`, not the sandbox's copy. (With `@grant none` you'd patch `window` directly, but you usually need `GM_xmlhttpRequest` - see below.)
+- **`@run-at document-start`** - you must replace `getUserMedia` before page code caches a reference to it.
+- **Cross-origin video taints `captureStream()`** and WebRTC silently drops a tainted track. A remote sample file with no `Access-Control-Allow-Origin` can't be a `<video src>` directly. Fetch it with `GM_xmlhttpRequest` (bypasses CORS) -> `Blob` -> `URL.createObjectURL` -> same-origin, untainted. Files chosen via `<input type=file>` are already `blob:` and need no GM.
+- **Google Meet calls `getUserMedia` separately for audio and video** (`{audio:true,video:false}` then `{audio:false,video:true}`), not once for both. A single cached build virtualizes only the first call, so the toggle appears to "do nothing" for the other track. Build the audio and video pipelines **independently and lazily**, each surviving across calls. (Plain `getUserMedia` test pages request both at once, so they hide this bug - test on the real app.)
+- **`AudioContext` starts suspended** under the autoplay policy, so even mic passthrough is silent until `ctx.resume()`. Resume eagerly and again on the first `pointerdown`/`keydown`.
+- **`createMediaElementSource` runs once per element and binds to the element, not the resource.** To change the clip later, swap `videoEl.src` - the audio routing follows and no graph rebuild is needed (this is what makes a file picker cheap).
+
+Verifying headless (catches runtime throws before you load it into a real call):
+- `navigator.mediaDevices` is **absent on `about:blank`** (not a secure context). Serve the test page from `localhost` (treated as secure).
+- Launch Chrome with `--use-fake-device-for-media-stream`, mimic `document-start` with `page.evaluateOnNewDocument(scriptSrc)`, and shim `GM_xmlhttpRequest` to hand the real mp4 bytes back as a `Blob`.
+- To tell a virtual track from a real one: the WebAudio audio track has `label === 'MediaStreamAudioDestinationNode'`; the canvas video track reports `resizeMode:'none'` plus the canvas size (the fake camera defaults to 640x480). `deviceId` is **not** a discriminator - both carry one.
+
+Limitations to mention to anyone using this: `requestAnimationFrame` throttles when the tab is backgrounded (video freezes for viewers); the clip is stretched to the camera-sized canvas (aspect ratio not preserved); and `@match *://*/*` routes your real mic/cam through the graph on every media-using site - narrow the match to lower the blast radius.
+
 ## Site-specific notes
 - **Slack** (`app.slack.com`) - selectors, shared confirm-dialog scoping, SPA patterns, the discovery probe, and the message-edit flow, learned building scripts: [slack-userscripts.md](slack-userscripts.md).
