@@ -2,7 +2,7 @@
 // @name         Virtual Media Injector
 // @namespace    http://tampermonkey.net/
 // @icon         data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Crect%20x='2'%20y='5'%20width='14'%20height='14'%20rx='2'%20fill='%23e53935'/%3E%3Cpath%20d='M16%209l6-3v12l-6-3z'%20fill='%23e53935'/%3E%3C/svg%3E
-// @version      2026.06.17.3
+// @version      2026.06.17.4
 // @description  Floating button that plays a pre-recorded mp4 into your webcam + mic for a meeting (overrides getUserMedia with a virtual stream you can toggle live)
 // @author       KakkoiDev
 // @match        *://*/*
@@ -52,6 +52,7 @@
         vTrack: null,     // canvas captureStream video track (master)
         aTrack: null,     // WebAudio destination audio track (master)
         mp4El: null,
+        customUrl: null,  // object URL of a user-picked file, for revocation
         btn: null,
     };
 
@@ -218,21 +219,65 @@
         setClipActive(true);
     }
 
+    // Swap the source on the SINGLE <video> element. The MediaElementAudioSource
+    // node binds to the element, not the resource, so audio routing survives a
+    // src change with no graph rebuild. File picks are blob: URLs (same-origin),
+    // so captureStream stays untainted.
+    function loadVideo(url) {
+        if (!state.mp4El) return;
+        if (state.playing) stopClip();
+        state.mp4El.src = url;
+        state.mp4El.load();
+    }
+
+    function pickFile(file, label) {
+        if (!file) return;
+        if (state.customUrl) w.URL.revokeObjectURL(state.customUrl);
+        state.customUrl = w.URL.createObjectURL(file);
+        loadVideo(state.customUrl);
+        if (label) label.textContent = file.name;
+    }
+
     function mountButton() {
         if (state.btn) return;
         const attach = () => {
             if (!document.body) return false;
+
+            const box = document.createElement('div');
+            box.style.cssText = [
+                'position:fixed', 'bottom:16px', 'right:16px', 'z-index:2147483647',
+                'display:flex', 'flex-direction:column', 'gap:6px', 'align-items:stretch',
+                'font:600 13px system-ui,sans-serif',
+            ].join(';');
+
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.textContent = 'Play clip';
             btn.style.cssText = [
-                'position:fixed', 'bottom:16px', 'right:16px', 'z-index:2147483647',
                 'padding:10px 14px', 'border:none', 'border-radius:8px',
-                'background:#e53935', 'color:#fff', 'font:600 13px system-ui,sans-serif',
+                'background:#e53935', 'color:#fff', 'font:inherit',
                 'box-shadow:0 2px 8px rgba(0,0,0,.3)', 'cursor:pointer',
             ].join(';');
             btn.addEventListener('click', (e) => { e.preventDefault(); toggleClip(); });
-            document.body.appendChild(btn);
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'video/*';
+            input.style.display = 'none';
+
+            const label = document.createElement('button');
+            label.type = 'button';
+            label.textContent = 'Choose video';
+            label.style.cssText = [
+                'padding:6px 10px', 'border:none', 'border-radius:8px',
+                'background:#37474f', 'color:#fff', 'font:inherit', 'cursor:pointer',
+                'max-width:200px', 'overflow:hidden', 'text-overflow:ellipsis', 'white-space:nowrap',
+            ].join(';');
+            label.addEventListener('click', (e) => { e.preventDefault(); input.click(); });
+            input.addEventListener('change', () => pickFile(input.files[0], label));
+
+            box.append(label, btn, input);
+            document.body.appendChild(box);
             state.btn = btn;
             return true;
         };
