@@ -2,7 +2,7 @@
 // @name         Virtual Media Injector
 // @namespace    http://tampermonkey.net/
 // @icon         data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Crect%20x='2'%20y='5'%20width='14'%20height='14'%20rx='2'%20fill='%23e53935'/%3E%3Cpath%20d='M16%209l6-3v12l-6-3z'%20fill='%23e53935'/%3E%3C/svg%3E
-// @version      2026.06.17.1
+// @version      2026.06.17.2
 // @description  Floating button that plays a pre-recorded mp4 into your webcam + mic for a meeting (overrides getUserMedia with a virtual stream you can toggle live)
 // @author       KakkoiDev
 // @match        *://*/*
@@ -44,7 +44,6 @@
     const orig = md.getUserMedia.bind(md);
 
     const state = {
-        building: null,   // Promise once the pipeline is being built
         mp4Url: null,     // object URL for the fetched mp4
         playing: false,
         ctx: null,
@@ -153,29 +152,47 @@
         return dest.stream.getAudioTracks()[0];
     }
 
-    function build(constraints) {
-        if (state.building) return state.building;
-        state.building = (async () => {
-            let realStream;
-            try {
-                realStream = await orig(constraints);
-            } catch (e) {
-                realStream = new w.MediaStream(); // denied: passthrough is black/silent
-            }
+    // Audio and video pipelines are built independently and lazily. Apps like
+    // Google Meet request audio and video in SEPARATE getUserMedia calls, so a
+    // single cached build would virtualize only the first one. Each ensure*()
+    // runs once and survives across calls.
+    let mp4Ready = null;
+    function ensureMp4() {
+        if (!mp4Ready) {
+            mp4Ready = (async () => {
+                state.mp4Url = await fetchMp4();
+                state.mp4El = await makeMp4Element(state.mp4Url);
+                state.mp4El.addEventListener('ended', stopClip);
+                console.log('[VMI] mp4 ready, readyState=', state.mp4El.readyState);
+            })();
+        }
+        return mp4Ready;
+    }
 
-            state.mp4Url = await fetchMp4();
-            state.mp4El = await makeMp4Element(state.mp4Url);
-            state.mp4El.addEventListener('ended', stopClip);
+    let videoReady = null;
+    function ensureVideo(realStream) {
+        if (!videoReady) {
+            videoReady = (async () => {
+                await ensureMp4();
+                state.vTrack = buildVideoTrack(realStream);
+                mountButton();
+                console.log('[VMI] video pipeline built');
+            })();
+        }
+        return videoReady;
+    }
 
-            const wantVideo = !!(constraints && constraints.video);
-            const wantAudio = !!(constraints && constraints.audio);
-            if (wantVideo) state.vTrack = buildVideoTrack(realStream);
-            if (wantAudio) state.aTrack = buildAudioTrack(realStream);
-
-            mountButton();
-            return realStream;
-        })();
-        return state.building;
+    let audioReady = null;
+    function ensureAudio(realStream) {
+        if (!audioReady) {
+            audioReady = (async () => {
+                await ensureMp4();
+                state.aTrack = buildAudioTrack(realStream);
+                mountButton();
+                console.log('[VMI] audio pipeline built');
+            })();
+        }
+        return audioReady;
     }
 
     function setClipActive(active) {
@@ -196,6 +213,7 @@
     }
 
     function toggleClip() {
+        console.log('[VMI] toggle clicked. mp4El=', !!state.mp4El, 'vTrack=', !!state.vTrack, 'aTrack=', !!state.aTrack, 'ctx=', state.ctx && state.ctx.state, 'playing=', state.playing);
         if (!state.mp4El) return;
         if (state.playing) { stopClip(); return; }
         if (state.ctx && state.ctx.state === 'suspended') state.ctx.resume();
@@ -229,16 +247,28 @@
 
     async function wrappedGetUserMedia(constraints) {
         constraints = constraints || {};
-        await build(constraints);
+        const wantVideo = !!constraints.video;
+        const wantAudio = !!constraints.audio;
+        console.log('[VMI] getUserMedia called video=' + wantVideo + ' audio=' + wantAudio, constraints);
+
+        let realStream;
+        try {
+            realStream = await orig(constraints);
+        } catch (e) {
+            console.warn('[VMI] real getUserMedia rejected', e);
+            throw e;
+        }
 
         const tracks = [];
-        if (constraints.video && state.vTrack) tracks.push(state.vTrack.clone());
-        if (constraints.audio && state.aTrack) tracks.push(state.aTrack.clone());
-        if (!tracks.length) return orig(constraints); // nothing of ours matched
+        if (wantVideo) { await ensureVideo(realStream); if (state.vTrack) tracks.push(state.vTrack.clone()); }
+        if (wantAudio) { await ensureAudio(realStream); if (state.aTrack) tracks.push(state.aTrack.clone()); }
+        if (!tracks.length) return realStream; // nothing of ours matched
 
+        console.log('[VMI] returning virtual stream tracks=', tracks.map((t) => t.kind));
         return new w.MediaStream(tracks);
     }
 
+    console.log('[VMI] override installed on', location.href);
     md.getUserMedia = wrappedGetUserMedia;
     // Some apps read the legacy alias; point it at the same wrapper.
     if (w.navigator.getUserMedia) {
