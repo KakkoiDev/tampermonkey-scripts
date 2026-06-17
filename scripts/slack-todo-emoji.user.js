@@ -2,8 +2,8 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.06.09.1
-// @description  Todo checkboxes in the Slack composer: double-click to add one, click to cycle status, Tab indents, Enter continues the list
+// @version      2026.06.17
+// @description  Todo checkboxes in the Slack composer: type "[] " to add one, click to cycle status, Tab indents, Enter continues the list
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
 // @grant        none
@@ -249,17 +249,34 @@
         img.removeAttribute('data-title');
     }, true);
 
-    // --- double-click empty space/text: insert a checkbox at the click point ---
-    document.addEventListener('dblclick', (e) => {
-        if (!e.target.closest(EDITOR)) return;
-        if (e.target.closest(EMOJI)) return; // double-clicking an emoji is two cycles, not an insert
-        const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-        if (!range) return;
-        const sel = window.getSelection();
-        sel.removeAllRanges();              // drop the word dblclick selected
-        sel.addRange(range);
-        document.execCommand('insertHTML', false, emojiHTML(BOX) + ' ');
-    });
+    // --- type "[] " (or "[ ] ") at the start of a line: turn it into a checkbox ---
+    // Mirrors Slack's "- " -> bullet autoformat. The trigger char is the trailing
+    // space; the ^ anchor restricts it to the line's leading edge.
+    const TODO_PREFIX = /^([ \u00a0]*)\[ ?\] /;
+    document.addEventListener('input', (e) => {
+        if (muting) return;
+        const editor = e.target.closest(EDITOR);
+        if (!editor) return;
+        const p = currentLine(editor);
+        if (!p) return;
+        const first = p.firstChild;
+        if (!first || first.nodeType !== Node.TEXT_NODE) return;
+        const m = first.textContent.match(TODO_PREFIX);
+        if (!m) return;
+
+        muting = true;
+        try {
+            const sel = window.getSelection();
+            const r = document.createRange();                 // select just the "[] "/"[ ] " chars, keep the indent
+            r.setStart(first, m[1].length);
+            r.setEnd(first, m[0].length);
+            sel.removeAllRanges();
+            sel.addRange(r);
+            document.execCommand('insertHTML', false, emojiHTML(BOX) + ' ');
+        } finally {
+            muting = false;
+        }
+    }, true);
 
     // --- Tab / Shift+Tab: indent / outdent by up to 7 spaces. ---
     document.addEventListener('keydown', (e) => {
