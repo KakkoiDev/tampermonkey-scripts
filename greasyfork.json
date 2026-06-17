@@ -77,6 +77,13 @@
       "visibility": "public",
       "name": "GitHub PR Copy Title + Link",
       "blurb": "Adds a button by the PR title that copies the title + PR link, ready to paste as a link in Slack, Notion, or markdown"
+    },
+    {
+      "file": "scripts/virtual-media-injector.user.js",
+      "id": "583097",
+      "visibility": "unlisted",
+      "name": "Virtual Media Injector",
+      "blurb": "Floating button that plays a pre-recorded video into your webcam and mic during a meeting, with live toggle back to your real camera"
     }
   ]
 }
