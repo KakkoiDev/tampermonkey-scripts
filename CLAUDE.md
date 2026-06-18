@@ -26,6 +26,8 @@ The loaded file's own header is IGNORED at runtime - the loader is what Tampermo
 
 Full guide and gotchas: [DEVELOPMENT.md](docs/DEVELOPMENT.md). Publishing: [PUBLISHING.md](docs/PUBLISHING.md) + the `greasyfork` skill.
 
+The user runs EVERY script through its local-file dev loader (live reload). So to debug a bug on a logged-in site, add temporary `console.log`s directly into the real `.user.js` (behind a `const DEBUG = true;` block), have the user reload the tab and paste the output, then strip the block before committing. Do NOT hand over a standalone console snippet - the file is already live-reloading, and in-file logs see the actual code path (which branch ran, real internal state). See [DEVELOPMENT.md](docs/DEVELOPMENT.md#debugging-on-a-logged-in-site).
+
 ## New scripts: target-site `@icon`
 
 Every script (and its dev loader) carries an `@icon` of the target site's favicon, so it's identifiable in the Tampermonkey dashboard. Put it right after `@namespace`. Always fetch a real icon for a new script - never ship without one, never guess the URL.
