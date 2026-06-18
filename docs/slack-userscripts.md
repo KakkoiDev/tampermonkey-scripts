@@ -44,7 +44,8 @@ There's no API - drive Slack's own UI (see `scripts/slack-quick-edit.user.js`):
 ## Editing inside the composer (Todo Emoji)
 
 Built `scripts/slack-todo-emoji.user.js` against the Quill composer (`.ql-editor` - the same element for the main box, the thread box, and the edit box). DOM shape:
-- **Emoji are `<img class="emoji">`, not Unicode text.** `data-id` / `data-title` / `data-stringify-text` all hold the shortcode (`:white_check_mark:`); `data-stringify-text` is what Slack saves; the glyph is a CSS `background-image` (`…/16.0/apple-large/<codepoint>@2x.png`) and `src` is a shared 1x1 transparent gif. `class="emoji"` is stable - anchor on it, read the shortcode from `data-id`.
+- **Emoji are `<img class="emoji">`, not Unicode text.** `data-id` / `data-title` / `data-stringify-text` all hold the shortcode (`:white_check_mark:`); `data-stringify-text` is what Slack saves; the glyph is a CSS `background-image` (`…/16.0/apple-large/<codepoint>.png` - **no `@2x`**, e.g. `2b1c.png`, multi-codepoint as `1f1ef-1f1f5.png`) and `src` is a shared 1x1 transparent gif. `class="emoji"` is stable - anchor on it, read the shortcode from `data-id`.
+- **To synthesize a different emoji, swap the codepoint in a borrowed emoji's `background-image`.** Read a live emoji's URL (don't hardcode the versioned `16.0/apple-large` path) and replace its codepoint token with yours: `bg.replace(/[0-9a-f]+(?:-[0-9a-f]+)*(?=(?:@\dx)?\.png)/i, cp)`. The token can carry a `-fe0f` variation selector, so match the hyphen-joined hex run before the optional `@<n>x` and `.png` - **not** a fixed `@2x` suffix. A stale `…@2x\.png` matcher was a silent no-op against the current `<cp>.png` URLs, so a cycled todo box kept the borrowed glyph while `data-id` (hence the save) was correct: right on save, wrong on screen. Found by logging the live node's computed `background-image` (the slack-todo-emoji repaint bug).
 - **Lines are plain `<p>`; indentation is literal leading spaces** (`white-space: pre-wrap` keeps them). No list markup.
 
 Quill mechanics that cost real debugging time - it owns the DOM, so you fight its model, not the DOM:
@@ -70,7 +71,7 @@ All of the above was found by **instrumenting, not guessing** - temporary `conso
 | "Edit message" menu item | no stable `data-qa` - match `[role="menuitem"]` by text "Edit message" (English) |
 | Active edit box (while editing) | container `[data-qa="message_editor"]`; textarea `[data-feat="edit_composer"]` |
 | Edit Save / Cancel | inside the editor, no `data-qa`: Save = `button.c-button--primary`, Cancel = `button.c-button--outline` (or save natively with Cmd/Ctrl+Enter) |
-| Composer emoji | `img.emoji` - shortcode in `data-id` / `data-stringify-text`; glyph is a CSS `background-image` (`…/<codepoint>@2x.png`), `src` is a 1x1 gif |
+| Composer emoji | `img.emoji` - shortcode in `data-id` / `data-stringify-text`; glyph is a CSS `background-image` (`…/<codepoint>.png`, no `@2x`), `src` is a 1x1 gif |
 | Composer line / indent | each line is a `<p>`; indentation is literal leading spaces (no list markup) |
 
 Slack ships UI changes often - if a selector stops matching, re-run the discovery probe.

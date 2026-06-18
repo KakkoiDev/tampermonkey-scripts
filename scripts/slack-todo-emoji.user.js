@@ -2,7 +2,7 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.06.17
+// @version      2026.06.18.1
 // @description  Todo checkboxes in the Slack composer: type "[] " to add one, click to cycle status, Tab indents, Enter continues the list
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -12,7 +12,7 @@
 
 // Slack renders every composer emoji as
 //   <img class="emoji" data-id=":code:" data-title=":code:" data-stringify-text=":code:"
-//        alt="… emoji" src="<1x1 gif>" style="background-image:url(…/<codepoint>@2x.png)">
+//        alt="… emoji" src="<1x1 gif>" style="background-image:url(…/<codepoint>.png)">
 // data-id is the stable shortcode; data-stringify-text is what Slack saves. We insert/cycle by
 // feeding that <img> through execCommand (the path Slack uses for paste), so Quill re-parses it
 // into its own emoji blot from data-id. Quill wraps each emoji embed in U+FEFF cursor anchors, so
@@ -50,13 +50,18 @@
     style.textContent = CYCLE.concat(STAR).map((e) => `${EDITOR} ${EMOJI}[data-id="${e.code}"]`).join(',') + ' { cursor: pointer; }';
     (document.head || document.documentElement).appendChild(style);
 
-    // Read the live (versioned) asset path off a real emoji so we don't hardcode Slack's "16.0/apple-large".
+    // The glyph is a CSS background-image PNG named by codepoint. We read the live (versioned) asset
+    // path off a real emoji so we don't hardcode Slack's "16.0/apple-large", then swap in our codepoint.
+    // Slack serves "…/<cp>.png" (NOT "<cp>@2x.png" - that older guess made the swap a no-op, so a cycled
+    // box kept the borrowed emoji's glyph while data-id was correct: right on save, wrong on screen). The
+    // codepoint token can carry a "-fe0f" variation selector and Slack may or may not append a "@2x"
+    // density, so match the hex run before an optional @<n>x and ".png".
     function bgFor(entry) {
         const same = document.querySelector(`${EMOJI}[data-id="${entry.code}"]`);
         if (same) return same.style.backgroundImage;
         const any = document.querySelector(EMOJI);
-        if (any) return any.style.backgroundImage.replace(/[^/]+@2x\.png/, `${entry.cp}@2x.png`);
-        return `url("https://a.slack-edge.com/production-standard-emoji-assets/16.0/apple-large/${entry.cp}@2x.png")`;
+        if (any) return any.style.backgroundImage.replace(/[0-9a-f]+(?:-[0-9a-f]+)*(?=(?:@\dx)?\.png)/i, entry.cp);
+        return `url("https://a.slack-edge.com/production-standard-emoji-assets/16.0/apple-large/${entry.cp}.png")`;
     }
 
     function emojiHTML(entry) {
@@ -77,22 +82,6 @@
         r.selectNode(node);
         sel.removeAllRanges();
         sel.addRange(r);
-    }
-
-    // After a cycle-click swaps the emoji, Slack/Quill sometimes leaves the new <img>'s tile
-    // unpainted on long-lived, emoji-dense composers: data-id and background-image are correct
-    // (getComputedStyle confirms) but the pixels don't refresh until a save/scroll/focus forces a
-    // paint. Force it ourselves - flush layout, then promote the node to its own layer for one
-    // frame to trigger a composite.
-    function forceRepaint(line) {
-        if (!line) return;
-        requestAnimationFrame(() => {
-            const node = statusEmoji(line);
-            if (!node) return;
-            void node.offsetHeight;
-            node.style.transform = 'translateZ(0)';
-            requestAnimationFrame(() => { node.style.transform = ''; });
-        });
     }
 
     // The first emoji of a line, ignoring leading whitespace-only text. null if the line doesn't start with one.
@@ -237,7 +226,6 @@
         const next = CYCLE[(CYCLE.indexOf(cur) + 1) % CYCLE.length];
         selectNode(img);
         document.execCommand('insertHTML', false, emojiHTML(next)); // replaces the selected emoji
-        forceRepaint(p);
     }, true);
 
     // Slack builds the emoji's hover tooltip from title / data-title (the :shortcode:); strip them on the
