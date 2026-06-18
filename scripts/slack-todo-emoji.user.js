@@ -2,7 +2,7 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.06.18.1
+// @version      2026.06.18.2
 // @description  Todo checkboxes in the Slack composer: type "[] " to add one, click to cycle status, Tab indents, Enter continues the list
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -44,6 +44,19 @@
 
     const EXIT_ON_EMPTY = false; // when true, Enter on an empty checkbox ends the list instead of adding another
     let muting = false;         // ignore our own edits in the line observer
+
+    // handleNewLine continues the list only for a real user newline. Slack rebuilds the editor's <p>s
+    // on its own - populating the edit composer when you open a message, re-rendering on save - with no
+    // keypress; those must not auto-insert a checkbox (it was filling blank lines with a box on
+    // edit/save). Record the last bare Enter (Cmd/Ctrl+Enter is save/send, not a newline; Shift+Enter
+    // is a newline, so it's allowed) and let handleNewLine act only within a short grace window after one.
+    const NEWLINE_GRACE_MS = 250;
+    let lastNewlineKey = 0;
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && e.target.closest && e.target.closest(EDITOR)) {
+            lastNewlineKey = performance.now();
+        }
+    }, true);
 
     // The cyclable checkboxes look clickable (pointer cursor).
     const style = document.createElement('style');
@@ -313,6 +326,7 @@
     // --- a new line was created: if the line above is a checkbox line, continue the list ---
     function handleNewLine(newP) {
         if (muting) return;
+        if (performance.now() - lastNewlineKey > NEWLINE_GRACE_MS) return; // no recent user Enter: this <p> came from Slack rebuilding the editor (edit-open / save), not a newline
         const prev = newP.previousElementSibling;
         if (!prev || prev.tagName !== 'P' || !isTodoLine(prev)) return;
         // only a clean "Enter at end of item" - the new line is still empty
