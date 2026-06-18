@@ -4,13 +4,36 @@ Edit a userscript file on disk, reload the page, see the change - no copy-paste 
 
 > **New script? Ship its dev loader with it.** Every script in `scripts/` is tested through a dev loader (below). When you add one, produce its loader block filled in from the script's own metadata - copy every `@match`, `@grant`, `@connect`, and external `@require` onto the loader, since the loaded file's header is ignored at runtime.
 
+## How it works (the mechanism)
+
+The real code stays **on disk**; a small **dev loader** stays in Tampermonkey. The loader's last line is the linchpin:
+
+```javascript
+// @require      file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/<script>.user.js
+```
+
+That `@require file://<absolute path>` makes Tampermonkey load the on-disk file as a library **every time a matching page loads**. So the disk file is the single source of truth, and the edit-test cycle is:
+
+1. **Claude Code (or you) edits** `scripts/<script>.user.js` on disk.
+2. **You reload the page.** Tampermonkey re-reads the `file://` `@require` and runs the new code - **no copy-paste into Tampermonkey, no Greasy Fork round-trip.**
+
+Precise wording matters: it is **pulled on page reload, not live-pushed**. Tampermonkey does not watch the file and refresh the tab for you; nothing reaches the browser until you reload (and even then the external can be cached - see [Troubleshooting](#troubleshooting)). The loader's own `// ==UserScript==` header is what Tampermonkey reads for `@match`/`@grant`/etc.; the required file's header is ignored at runtime.
+
 ## Requirements
 - **Chrome** (or a Chromium browser). Loading userscripts from `file://` does **not** work in Firefox.
-- **Tampermonkey 5.5.0+** (it tracks local file changes on disk).
+- **Tampermonkey 5.5.0+** (re-reads a local `file://` `@require` on page reload; older versions cache the first copy and never pick up disk edits).
 - **Grant file access**: `chrome://extensions` -> Tampermonkey -> *Details* -> turn on **"Allow access to file URLs"**, and set **Site access -> "On all sites"**.
 
 ## One-time setup per script
-Create a small **dev loader** userscript in Tampermonkey that pulls the real file from disk:
+One dev loader per script, created once in Tampermonkey. Steps:
+
+1. Tampermonkey dashboard -> **Create a new script** (the `+` tab).
+2. Delete the template, paste the **dev loader** block below.
+3. Fill every `<...>` placeholder from the real script's own metadata - leave none behind.
+4. Point `@require file://` at the script's **absolute** on-disk path (e.g. `file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/<script>.user.js`).
+5. **Save** (Cmd/Ctrl+S), and **disable any published/synced copy** of the same script so it doesn't run twice alongside the loader.
+
+The loader pulls the real file from disk:
 
 ```javascript
 // ==UserScript==
@@ -63,11 +86,21 @@ If the real script pulls a library from a CDN (e.g. `scripts/google-emoji-blast.
 ```
 
 ## The loop
-1. Edit the real `.user.js` file (you or an AI/editor).
-2. Reload the page.
-3. The change is live. You do **not** re-save the loader.
+1. **Claude Code (or you) edits** the real `scripts/<script>.user.js` on disk.
+2. **Reload the page.** Tampermonkey re-reads the `file://` `@require` and runs the new code. You do **not** re-save the loader, and you do **not** paste anything into Tampermonkey.
+3. The change is live.
 
 Tip: add `console.log('[my-script] vN loaded')` and bump `N` to confirm reloads are picking up your edits. Keep destructive actions behind a `DRY_RUN` flag while iterating.
+
+### Debugging cycle with the LLM (logged-in sites)
+Claude can't see an authenticated page, so the round-trip is:
+
+1. **Claude edits the script** - adds the fix, or temporary `console.log`s behind a `const DEBUG = true;` block (instrument **in the file**, never a standalone console snippet - the file is already live-reloading; see [Debugging on a logged-in site](#debugging-on-a-logged-in-site)).
+2. **You reload the tab**, reproduce the behaviour.
+3. **You copy/paste back** the DOM (right-click the element -> Inspect -> Copy -> **Copy element**) and/or the relevant console lines. Console context must be `top` (see [slack-userscripts.md](slack-userscripts.md#discovering-selectors)).
+4. **Claude reads the output**, confirms or rejects the hypothesis, and edits again. Repeat until fixed, then strip the `DEBUG` block.
+
+This is how the `slack-todo-emoji` repaint bug was found: three paint-timing hypotheses were all refuted by one pasted-back log that showed the live node was fine but its `background-image` URL was wrong.
 
 ## Troubleshooting
 - **"Not allowed to load local resource" / nothing loads** - file access isn't granted (see Requirements), or Site access isn't "On all sites".
