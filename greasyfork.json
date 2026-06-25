@@ -84,6 +84,13 @@
       "visibility": "unlisted",
       "name": "Virtual Media Injector",
       "blurb": "Floating button that plays a pre-recorded video into your webcam and mic during a meeting, with live toggle back to your real camera"
+    },
+    {
+      "file": "scripts/gmeet-standup-roster.user.js",
+      "id": "584250",
+      "visibility": "public",
+      "name": "Gmeet Standup Roster",
+      "blurb": "Marks who has talked in Google Meet's People panel - auto-detected from the audio indicator, with a manual toggle, for tracking daily standups"
     }
   ]
 }
