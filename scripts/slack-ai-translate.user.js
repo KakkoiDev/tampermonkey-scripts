@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.22
+// @version      2026.07.06.24
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -99,15 +99,13 @@
             CLAUDE_MODEL: 'claude-haiku-4-5',
             OLLAMA_HOST: 'http://localhost:11434',
             OLLAMA_MODEL: 'gemma3:4b',
-            PROMPT: `You are a translation engine. Translate the following text between Japanese and English.
-Respond with ONLY the translated text, with NO extra words, explanations, or greetings.
-Do NOT include the original text, do NOT say "here is the translation", do NOT add any comments.
-If the text is already in English, translate to Japanese. If it's in Japanese, translate to English.
-Keep emojis. Do NOT show alternative translations.
-If the text is not in Japanese or English, respond with "N/A".
-Do not modify the HTML tags. Preserve them.
-Do not modify anything inside the ts-mention tags.
-Ignore ts-mention tags when determining if the language of the text.`
+            PROMPT: `You are a translation engine. The input is an HTML fragment of a Slack message.
+If the text is in English, translate it to Japanese. If it is in Japanese, translate it to English. If it mixes both, translate everything into the language used less in the input. If it is in neither language, return the input unchanged.
+Respond with ONLY the translated HTML fragment: no extra words, no explanations, no greetings, no alternative translations, no code fences.
+Keep every HTML tag exactly as in the input: same tags, same order, same attributes. Never add, remove, or change tags or attributes.
+Translate only the visible text, including link labels.
+Do NOT translate @mentions, #channel names, URLs, ticket IDs like ABC-123, or text inside <code> or <pre> tags.
+Keep emojis exactly as they are (unicode emoji, :emoji_codes:, and emoji <img> tags). Do not add new emojis.`
         },
         MODEL_SUGGESTIONS: {
             gemini: ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest'],
