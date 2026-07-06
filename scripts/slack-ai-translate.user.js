@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.26
+// @version      2026.07.06.28
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -41,7 +41,7 @@
 // [x] Use prettier loading icon than the rotating emoji (replaced by a status link under the message)
 // [x] Improve dialog styling (Slack-styled modal, theme-aware via --sk_* vars)
 // [x] Remove the translate button from images' toolbars (skip data-qa="file_actions" containers)
-// [ ] Add a | separator in the input toolbar to separate the translation icon from the other ones
+// [x] Add a | separator in the input toolbar to separate the translation icon from the other ones
 // [x] Add an option to connect to a local Ollama model
 // [x] Add right click open settings dialog
 // [x] Add hover tooltip: "Translate\n[right click to open settings]"
@@ -532,6 +532,10 @@ Keep emojis exactly as they are (unicode emoji, :emoji_codes:, and emoji <img> t
         addTranslateButtonToInput(inputToolbars) {
             for (const inputToolbar of inputToolbars) {
                 if (inputToolbar.querySelector(`.${CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON}`)) continue;
+                // Slack's native divider class, so it matches the other | separators
+                const divider = document.createElement('span');
+                divider.className = 'c-wysiwyg_container__footer_divider';
+                inputToolbar.appendChild(divider);
                 const button = UI.createTranslateButton(CONSTANTS.TYPES.INPUT);
                 inputToolbar.appendChild(button);
             }
