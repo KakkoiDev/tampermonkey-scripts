@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.20
+// @version      2026.07.06.22
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -14,17 +14,38 @@
 // @license      MIT
 // ==/UserScript==
 
+// HOW TO USE
+//
+// A globe icon is added in two places: the message composer's toolbar (bottom
+// row, next to the mic/video buttons) and every message's hover toolbar.
+//
+// 1. First run: RIGHT-CLICK the composer's globe icon to open the settings.
+//    Pick a provider and fill in its pane:
+//      - Gemini (default): free API key from https://aistudio.google.com/apikey
+//      - Claude: API key from https://console.anthropic.com/settings/keys
+//      - Ollama (local, free, private): install from https://ollama.com and
+//        run `ollama pull gemma3:4b`. Use a 4b+ model; 1b models are too weak.
+//    The translation prompt is editable there too ("Reset" restores the
+//    default). Languages are EN <-> JA by default; edit the prompt to change.
+// 2. Translate a message: hover it, click the globe in its toolbar. The text
+//    is replaced by the translation; "See original" under the message toggles
+//    back and forth. Re-rendered messages (scrolling) keep their translation.
+// 3. Translate your draft: click the composer's globe. "Translating..." shows
+//    under the text while the draft stays editable; the draft is then replaced
+//    by the translation, with the same "See original" toggle. Typing dismisses
+//    the toggle so it can never overwrite your edits.
+//
 // TODO:
 // [x] The input translation doesn't work in the thread feed & in normal thread
 // [x] The message translate button doesn't work at all
 // [x] Use prettier loading icon than the rotating emoji (replaced by a status link under the message)
-// [ ] Improve dialog styling
+// [x] Improve dialog styling (Slack-styled modal, theme-aware via --sk_* vars)
 // [ ] Remove the translate button from images' toolbars
 // [ ] Add a | separator in the input toolbar to separate the translation icon from the other ones
 // [x] Add an option to connect to a local Ollama model
 // [x] Add right click open settings dialog
 // [x] Add hover tooltip: "Translate\n[right click to open settings]"
-// [ ] Improve tooltip styling
+// [x] Improve tooltip styling (custom Slack-look tooltip, 500ms delay)
 // [x] fix styling of the translate icon: too large. Probably due to update in Slack's styling.
 
 (function() {
