@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.6
+// @version      2026.07.06.8
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -37,6 +37,7 @@
             INPUT_TOOLBAR: '.c-texty_buttons',
             INPUT_WRAPPER: '.p-message_pane_input_inner_main',
             INPUT_CONTAINER: '[data-qa="message_input_container"]',
+            WYSIWYG_CONTAINER: '.c-wysiwyg_container',
             MESSAGE_TOOLBAR: '.c-message_actions__container',
             MESSAGE_DISPLAY: '.p-rich_text_block',
             MESSAGE_BLOCKS: '.c-message_kit__blocks',
@@ -277,6 +278,10 @@ Ignore ts-mention tags when determining if the language of the text.`
             return translated;
         }
     };
+
+    // Composer translation state, keyed by the ql-editor element. Any user edit
+    // dismisses the entry: the toggle must never overwrite typed content.
+    const InputTranslationStore = new WeakMap();
 
     // Per-message translation state, keyed by message ts.
     // Entries survive Slack's virtual-list recycling; the MutationObserver re-applies them.
@@ -529,13 +534,26 @@ Ignore ts-mention tags when determining if the language of the text.`
                 ?.querySelector(CONSTANTS.SELECTORS.INPUT);
         },
 
+        inputStatusAnchor(input) {
+            return input.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
+                ?? input.closest(CONSTANTS.SELECTORS.WYSIWYG_CONTAINER)
+                ?? input.parentElement;
+        },
+
         getOrCreateInputStatusBar(input) {
-            const container = input.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER) ?? input.parentElement;
+            const container = this.inputStatusAnchor(input);
             const existing = container.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
             if (existing) return existing;
             const bar = UI.createStatusBar(CONSTANTS.CLASSES.INPUT_STATUS);
             container.appendChild(bar);
             return bar;
+        },
+
+        dismissInputTranslation(input) {
+            const entry = InputTranslationStore.get(input);
+            if (entry?.onEdit) input.removeEventListener('input', entry.onEdit);
+            InputTranslationStore.delete(input);
+            this.inputStatusAnchor(input)?.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`)?.remove();
         },
 
         async translateInput(input) {
@@ -557,9 +575,19 @@ Ignore ts-mention tags when determining if the language of the text.`
                 const sanitizedText = translatedText
                     .replace(/(?:<p>(?:<br\s*\/?>|[\s\\n\r]*)<\/p>[\s\r\n]*)+$/gmi, '')
                     .replace(/[\r\n]+$/g, '');
-                // discard the result if the user kept typing while the request was in flight
-                if (input.innerHTML === original) input.innerHTML = sanitizedText;
-                bar.remove();
+                if (input.innerHTML !== original) {
+                    // the user kept typing while the request was in flight: their edits win
+                    this.dismissInputTranslation(input);
+                    return;
+                }
+                const entry = { original, translated: sanitizedText, showing: 'translated' };
+                entry.onEdit = () => this.dismissInputTranslation(input);
+                InputTranslationStore.set(input, entry);
+                input.innerHTML = sanitizedText;
+                // typing dismisses the toggle: from then on the draft is the user's own
+                input.addEventListener('input', entry.onEdit, { once: true });
+                bar.dataset.state = 'done';
+                UI.setStatus(bar, 'Translated.', 'See original');
             } catch (error) {
                 console.error('Translation error:', error);
                 bar.dataset.state = 'error';
@@ -569,12 +597,40 @@ Ignore ts-mention tags when determining if the language of the text.`
         },
 
         handleInputStatusBarClick(bar) {
-            if (bar.dataset.state !== 'error') return;
             const input = bar.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
                 ?.querySelector(CONSTANTS.SELECTORS.INPUT) ??
+                bar.closest(CONSTANTS.SELECTORS.WYSIWYG_CONTAINER)
+                ?.querySelector(CONSTANTS.SELECTORS.INPUT) ??
                 bar.parentElement?.querySelector(CONSTANTS.SELECTORS.INPUT);
-            bar.remove();
-            if (input) this.translateInput(input);
+
+            if (bar.dataset.state === 'error') {
+                bar.remove();
+                if (input) this.translateInput(input);
+                return;
+            }
+            if (bar.dataset.state !== 'done' || !input) return;
+
+            const entry = InputTranslationStore.get(input);
+            if (!entry) {
+                bar.remove();
+                return;
+            }
+            const expected = entry.showing === 'translated' ? entry.translated : entry.original;
+            if (input.innerHTML !== expected) {
+                // draft changed under us (edit we didn't catch, Slack draft restore):
+                // never overwrite it
+                this.dismissInputTranslation(input);
+                return;
+            }
+            if (entry.showing === 'translated') {
+                input.innerHTML = entry.original;
+                entry.showing = 'original';
+                UI.setStatus(bar, '', 'See translation');
+            } else {
+                input.innerHTML = entry.translated;
+                entry.showing = 'translated';
+                UI.setStatus(bar, 'Translated.', 'See original');
+            }
         },
 
         swapDialogBody(dialog, provider) {
