@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.16
+// @version      2026.07.06.18
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -599,12 +599,19 @@ Ignore ts-mention tags when determining if the language of the text.`
             const existing = scope.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
             if (existing) return existing;
             const bar = UI.createStatusBar(CONSTANTS.CLASSES.INPUT_STATUS);
-            // inside .ql-container, after the editor: the container is plain block layout,
-            // so the bar sits directly under the text no matter how Slack's CSS reorders
-            // the composer's rows (sibling insertion proved unreliable for that reason)
+            // inside .ql-container, after the editor. Slack styles these containers as
+            // flex rows, which pushed the bar to the right of the text; forcing wrap +
+            // a full-basis bar drops it onto its own line below the text, and both
+            // properties are no-ops in plain block layout.
+            bar.style.flexBasis = '100%';
+            bar.style.width = '100%';
             const qlContainer = input.closest(CONSTANTS.SELECTORS.QL_CONTAINER);
-            if (qlContainer) qlContainer.appendChild(bar);
-            else scope.appendChild(bar);
+            if (qlContainer) {
+                qlContainer.style.flexWrap = 'wrap';
+                qlContainer.appendChild(bar);
+            } else {
+                scope.appendChild(bar);
+            }
             return bar;
         },
 
