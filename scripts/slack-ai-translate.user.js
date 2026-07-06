@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.18
+// @version      2026.07.06.20
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -394,31 +394,103 @@ Ignore ts-mention tags when determining if the language of the text.`
             bar.title = title;
         },
 
+        // theme-aware via Slack's --sk_* CSS variables, with light-theme fallbacks
+        dialogCSS: `
+            dialog.translate-settings-dialog {
+                background: rgb(var(--sk_primary_background, 255, 255, 255));
+                color: rgb(var(--sk_primary_foreground, 29, 28, 29));
+                border: none;
+                border-radius: 12px;
+                box-shadow: 0 0 0 1px rgba(0, 0, 0, .1), 0 18px 48px rgba(0, 0, 0, .35);
+                padding: 0;
+                width: 460px;
+                max-width: 90vw;
+            }
+            dialog.translate-settings-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+            .translate-dialog-header {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 20px 28px 4px; font-size: 22px; font-weight: 900; line-height: 1.2;
+            }
+            .translate-dialog-close {
+                background: none; border: none; color: inherit; opacity: .7;
+                font-size: 18px; line-height: 1; cursor: pointer; padding: 6px 8px; border-radius: 4px;
+            }
+            .translate-dialog-close:hover {
+                opacity: 1;
+                background: rgba(var(--sk_primary_foreground, 29, 28, 29), .08);
+            }
+            .translate-dialog-content {
+                padding: 0 28px 8px; max-height: 60vh; overflow-y: auto; font-size: 15px;
+            }
+            .translate-dialog-content label {
+                display: block; font-weight: 700; font-size: 13px; margin: 14px 0 4px;
+            }
+            .translate-settings-dialog input,
+            .translate-settings-dialog select,
+            .translate-settings-dialog textarea {
+                width: 100%; box-sizing: border-box; background: transparent; color: inherit;
+                border: 1px solid rgba(var(--sk_primary_foreground, 29, 28, 29), .3);
+                border-radius: 4px; padding: 8px 12px; font-size: 15px; font-family: inherit;
+            }
+            .translate-settings-dialog textarea { resize: vertical; }
+            .translate-settings-dialog input:focus,
+            .translate-settings-dialog select:focus,
+            .translate-settings-dialog textarea:focus {
+                outline: none;
+                border-color: rgb(var(--sk_highlight, 18, 100, 163));
+                box-shadow: 0 0 0 3px rgba(var(--sk_highlight, 18, 100, 163), .3);
+            }
+            .translate-dialog-content p { font-size: 13px; opacity: .75; margin: 8px 0 0; line-height: 1.4; }
+            .translate-settings-dialog a { color: rgb(var(--sk_highlight, 18, 100, 163)); }
+            .translate-settings-dialog code {
+                font-family: Monaco, Menlo, Consolas, monospace; font-size: 12px;
+                border: 1px solid rgba(var(--sk_primary_foreground, 29, 28, 29), .2);
+                border-radius: 3px; padding: 1px 4px;
+            }
+            .translate-settings-dialog .translate-prompt-reset {
+                margin-top: 8px; background: none; border: none; padding: 0;
+                color: rgb(var(--sk_highlight, 18, 100, 163));
+                font-size: 13px; font-weight: 700; cursor: pointer;
+            }
+            .translate-dialog-footer {
+                display: flex; justify-content: flex-end; gap: 12px; padding: 16px 28px 24px; margin: 0;
+            }
+            .translate-dialog-footer button {
+                font-weight: 700; font-size: 15px; border-radius: 4px;
+                padding: 0 14px; height: 36px; cursor: pointer; font-family: inherit;
+            }
+            .translate-btn-outline {
+                background: transparent; color: inherit;
+                border: 1px solid rgba(var(--sk_primary_foreground, 29, 28, 29), .3);
+            }
+            .translate-btn-primary { background: #007a5a; color: #fff; border: none; }
+            .translate-btn-primary:hover { background: #148567; }
+        `,
+
         createSettingsDialog() {
             const dialog = document.createElement('dialog');
+            dialog.className = 'translate-settings-dialog';
             dialog.setAttribute('closedby', 'any');
-            dialog.style.cssText = 'max-width:480px;';
             dialog.innerHTML = `
-                <label>
-                    Provider:
+                <div class="translate-dialog-header">
+                    Translation settings
+                    <button type="button" class="translate-dialog-close" aria-label="Close">✕</button>
+                </div>
+                <div class="translate-dialog-content">
+                    <label>Provider</label>
                     <select class="${CONSTANTS.CLASSES.PROVIDER_SELECT}" name="provider">
                         <option value="gemini">Gemini</option>
                         <option value="claude">Claude (Anthropic)</option>
                         <option value="ollama">Ollama (local)</option>
                     </select>
-                </label>
-                <div class="${CONSTANTS.CLASSES.DIALOG_BODY}"></div>
-                <hr>
-                <label style="display:block;">
-                    Translation prompt:
-                    <textarea class="${CONSTANTS.CLASSES.PROMPT_TEXTAREA}" rows="10" style="width:100%;box-sizing:border-box;"></textarea>
-                </label>
-                <button type="button" class="${CONSTANTS.CLASSES.PROMPT_RESET}">Reset prompt to default</button>
-                <form method="dialog">
-                    <div>
-                        <button value="cancel">Cancel</button>
-                        <button value="ok">OK</button>
-                    </div>
+                    <div class="${CONSTANTS.CLASSES.DIALOG_BODY}"></div>
+                    <label>Translation prompt</label>
+                    <textarea class="${CONSTANTS.CLASSES.PROMPT_TEXTAREA}" rows="8"></textarea>
+                    <button type="button" class="${CONSTANTS.CLASSES.PROMPT_RESET}">Reset prompt to default</button>
+                </div>
+                <form method="dialog" class="translate-dialog-footer">
+                    <button value="cancel" class="translate-btn-outline">Cancel</button>
+                    <button value="ok" class="translate-btn-primary">Save</button>
                 </form>`;
             return dialog;
         }
@@ -710,14 +782,10 @@ Ignore ts-mention tags when determining if the language of the text.`
             switch (provider) {
                 case 'gemini':
                     dialogBody.innerHTML = `
-                        <label style="display:block;">
-                            API key:
-                            <input class="${CONSTANTS.CLASSES.PROVIDER_API_KEY}">
-                        </label>
-                        <label style="display:block;">
-                            Model:
-                            <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
-                        </label>
+                        <label>API key</label>
+                        <input class="${CONSTANTS.CLASSES.PROVIDER_API_KEY}">
+                        <label>Model</label>
+                        <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
                         ${modelDatalist}
                         <p>Get a free Gemini API key <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank">here</a>.</p>
                         <p>Warning: the API key is stored unencrypted in your browser's local storage.</p>
@@ -727,14 +795,10 @@ Ignore ts-mention tags when determining if the language of the text.`
                     break;
                 case 'claude':
                     dialogBody.innerHTML = `
-                        <label style="display:block;">
-                            API key:
-                            <input class="${CONSTANTS.CLASSES.PROVIDER_API_KEY}">
-                        </label>
-                        <label style="display:block;">
-                            Model:
-                            <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
-                        </label>
+                        <label>API key</label>
+                        <input class="${CONSTANTS.CLASSES.PROVIDER_API_KEY}">
+                        <label>Model</label>
+                        <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
                         ${modelDatalist}
                         <p>Create an API key in the <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a> (requires an Anthropic account with credits).</p>
                         <p>Warning: the API key is stored unencrypted in your browser's local storage and sent directly from your browser to api.anthropic.com.</p>`;
@@ -743,14 +807,10 @@ Ignore ts-mention tags when determining if the language of the text.`
                     break;
                 case 'ollama':
                     dialogBody.innerHTML = `
-                        <label style="display:block;">
-                            Host:
-                            <input class="${CONSTANTS.CLASSES.PROVIDER_HOST}">
-                        </label>
-                        <label style="display:block;">
-                            Model:
-                            <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
-                        </label>
+                        <label>Host</label>
+                        <input class="${CONSTANTS.CLASSES.PROVIDER_HOST}">
+                        <label>Model</label>
+                        <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
                         ${modelDatalist}
                         <p>Setup: install Ollama from <a href="https://ollama.com" target="_blank">ollama.com</a>, then run <code>ollama pull ${CONSTANTS.DEFAULTS.OLLAMA_MODEL}</code>. No API key needed; nothing leaves your machine.</p>
                         <p>Use a 4b-parameter model or larger: 1b-class models (e.g. gemma3:1b) receive the translation prompt but are too weak to follow it and tend to echo the message back untranslated. Larger models (e.g. gemma4) also preserve message formatting like links and mentions more reliably.</p>
@@ -763,8 +823,14 @@ Ignore ts-mention tags when determining if the language of the text.`
     };
 
     // Initialize
+    const dialogStyle = document.createElement('style');
+    dialogStyle.textContent = UI.dialogCSS;
+    document.head.appendChild(dialogStyle);
+
     const dialog = UI.createSettingsDialog();
     document.body.appendChild(dialog);
+
+    dialog.querySelector('.translate-dialog-close').addEventListener('click', () => dialog.close());
 
     function openSettings() {
         if (dialog.open) return;
