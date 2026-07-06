@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.24
+// @version      2026.07.06.26
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -40,7 +40,7 @@
 // [x] The message translate button doesn't work at all
 // [x] Use prettier loading icon than the rotating emoji (replaced by a status link under the message)
 // [x] Improve dialog styling (Slack-styled modal, theme-aware via --sk_* vars)
-// [ ] Remove the translate button from images' toolbars
+// [x] Remove the translate button from images' toolbars (skip data-qa="file_actions" containers)
 // [ ] Add a | separator in the input toolbar to separate the translation icon from the other ones
 // [x] Add an option to connect to a local Ollama model
 // [x] Add right click open settings dialog
@@ -519,6 +519,9 @@ Keep emojis exactly as they are (unicode emoji, :emoji_codes:, and emoji <img> t
     const UIManager = {
         addTranslateButtonToMessages(toolbars) {
             for (const toolbar of toolbars) {
+                // file/image hover toolbars reuse .c-message_actions__container but are
+                // not message toolbars; injecting there lands inside the download link
+                if (toolbar.dataset.qa === 'file_actions') continue;
                 const toolbarInner = toolbar.children[0];
                 const lastElement = toolbarInner.children[toolbarInner.children.length - 1];
                 const button = UI.createTranslateButton(CONSTANTS.TYPES.MESSAGE);
