@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.10
+// @version      2026.07.06.12
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -547,9 +547,10 @@ Ignore ts-mention tags when determining if the language of the text.`
             const existing = scope.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
             if (existing) return existing;
             const bar = UI.createStatusBar(CONSTANTS.CLASSES.INPUT_STATUS);
-            // directly under the typed text, above the composer's footer buttons
-            const qlContainer = input.closest(CONSTANTS.SELECTORS.QL_CONTAINER);
-            if (qlContainer) qlContainer.insertAdjacentElement('afterend', bar);
+            // the ql-container and its parent are flex-row cells; insert after the whole
+            // input row so the bar lands in the composer's vertical stack, under the text
+            const inputRow = input.closest(CONSTANTS.SELECTORS.QL_CONTAINER)?.parentElement;
+            if (inputRow?.parentElement) inputRow.insertAdjacentElement('afterend', bar);
             else scope.appendChild(bar);
             return bar;
         },
