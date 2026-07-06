@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.14
+// @version      2026.07.06.16
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -56,7 +56,8 @@
             PROMPT_RESET: 'translate-prompt-reset',
             PROVIDER_API_KEY: 'translate-provider-api-key',
             PROVIDER_MODEL: 'translate-provider-model',
-            PROVIDER_HOST: 'translate-provider-host'
+            PROVIDER_HOST: 'translate-provider-host',
+            TOOLTIP: 'translate-tooltip'
         },
         TYPES: {
             MESSAGE: 'message',
@@ -280,6 +281,59 @@ Ignore ts-mention tags when determining if the language of the text.`
         }
     };
 
+    // Slack-styled hover tooltip for the translate buttons. Slack's own tooltip
+    // system is wired through React props and never fires for injected buttons,
+    // so this mimics it: dark rounded box, bold label, muted hint, hover delay.
+    const Tooltip = {
+        DELAY_MS: 500,
+        el: null,
+        timer: null,
+
+        ensure() {
+            if (this.el) return this.el;
+            const el = document.createElement('div');
+            el.className = CONSTANTS.CLASSES.TOOLTIP;
+            el.style.cssText = 'position:fixed;z-index:10000;pointer-events:none;display:none;'
+                + 'background:#1a1d21;color:#fff;font-size:13px;font-weight:700;line-height:1.3;'
+                + 'padding:8px 12px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);'
+                + 'max-width:220px;text-align:center;';
+            document.body.appendChild(el);
+            this.el = el;
+            return el;
+        },
+
+        schedule(target, label, hint) {
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => this.show(target, label, hint), this.DELAY_MS);
+        },
+
+        show(target, label, hint) {
+            if (!target.isConnected) return;
+            const el = this.ensure();
+            el.innerHTML = hint
+                ? `${label}<div style="font-weight:400;font-size:12px;opacity:.7;">${hint}</div>`
+                : label;
+            // render hidden first to measure, then center above the button
+            el.style.display = 'block';
+            el.style.visibility = 'hidden';
+            const rect = target.getBoundingClientRect();
+            const tip = el.getBoundingClientRect();
+            let left = rect.left + rect.width / 2 - tip.width / 2;
+            left = Math.max(4, Math.min(left, window.innerWidth - tip.width - 4));
+            let top = rect.top - tip.height - 8;
+            if (top < 4) top = rect.bottom + 8;
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
+            el.style.visibility = 'visible';
+        },
+
+        hide() {
+            clearTimeout(this.timer);
+            this.timer = null;
+            if (this.el) this.el.style.display = 'none';
+        }
+    };
+
     // Composer translation state, keyed by the ql-editor element. Any user edit
     // dismisses the entry: the toggle must never overwrite typed content.
     const InputTranslationStore = new WeakMap();
@@ -317,10 +371,8 @@ Ignore ts-mention tags when determining if the language of the text.`
                     data-qa="${type === CONSTANTS.TYPES.MESSAGE ? 'add_to_list' : 'video_composer_button'}"
                     ${type === CONSTANTS.TYPES.MESSAGE ? 'data-focus-key="message_actions"' : 'tabindex="-1"'}
                     aria-label="Translate"
-                    ${type === CONSTANTS.TYPES.INPUT ? 'aria-expanded="false" delay="500"' : ''}
-                    data-sk="tooltip_parent"
+                    ${type === CONSTANTS.TYPES.INPUT ? 'aria-expanded="false"' : ''}
                     type="button"
-                    title="${type === CONSTANTS.TYPES.MESSAGE ? 'Translate' : 'Translate\n[right click to open settings]'}"
                 >
                     ${this.translateSVG}
                 </button>`;
@@ -753,7 +805,26 @@ Ignore ts-mention tags when determining if the language of the text.`
     });
 
     // Event Listeners
+    let hoveredTranslateButton = null;
+    document.body.addEventListener('mouseover', (event) => {
+        const button = event.target.closest(
+            `.${CONSTANTS.CLASSES.TRANSLATE_MESSAGE_BUTTON}, .${CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON}`
+        );
+        if (button === hoveredTranslateButton) return;
+        hoveredTranslateButton = button;
+        Tooltip.hide();
+        if (!button) return;
+        const isInput = button.classList.contains(CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON);
+        Tooltip.schedule(button, 'Translate', isInput ? 'Right click to open options' : null);
+    });
+
+    document.documentElement.addEventListener('mouseleave', () => {
+        hoveredTranslateButton = null;
+        Tooltip.hide();
+    });
+
     document.body.addEventListener('click', async (event) => {
+        Tooltip.hide();
         const inputStatusBar = event.target.closest(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
         if (inputStatusBar) {
             UIManager.handleInputStatusBarClick(inputStatusBar);
@@ -783,6 +854,7 @@ Ignore ts-mention tags when determining if the language of the text.`
 
         if (targetInputButton) {
             event.preventDefault();
+            Tooltip.hide();
             // Wait for next mouseup
             // Needed because the dialog's closeby=any gets triggered on mouseup
             const handler = () => {
