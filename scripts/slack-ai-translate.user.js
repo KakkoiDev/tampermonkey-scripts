@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.4
+// @version      2026.07.06.6
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -49,6 +49,7 @@
             PROVIDER_SELECT: 'translate-provider-select',
             DIALOG_BODY: 'translate-dialog-body',
             STATUS_LINK: 'translate-status-link',
+            INPUT_STATUS: 'translate-input-status',
             PROMPT_TEXTAREA: 'translate-prompt-textarea',
             PROMPT_RESET: 'translate-prompt-reset',
             PROVIDER_API_KEY: 'translate-provider-api-key',
@@ -73,7 +74,7 @@
             GEMINI_MODEL: 'gemini-flash-latest',
             CLAUDE_MODEL: 'claude-haiku-4-5',
             OLLAMA_HOST: 'http://localhost:11434',
-            OLLAMA_MODEL: 'gemma3:1b',
+            OLLAMA_MODEL: 'gemma3:4b',
             PROMPT: `You are a translation engine. Translate the following text between Japanese and English.
 Respond with ONLY the translated text, with NO extra words, explanations, or greetings.
 Do NOT include the original text, do NOT say "here is the translation", do NOT add any comments.
@@ -87,7 +88,7 @@ Ignore ts-mention tags when determining if the language of the text.`
         MODEL_SUGGESTIONS: {
             gemini: ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest'],
             claude: ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-8'],
-            ollama: ['gemma3:1b', 'gemma3:4b', 'qwen3:4b']
+            ollama: ['gemma3:4b', 'gemma4:latest']
         }
     };
 
@@ -322,10 +323,10 @@ Ignore ts-mention tags when determining if the language of the text.`
             return wrapper.firstElementChild;
         },
 
-        createStatusBar() {
+        createStatusBar(className = CONSTANTS.CLASSES.STATUS_LINK) {
             const bar = document.createElement('div');
-            bar.className = CONSTANTS.CLASSES.STATUS_LINK;
-            bar.style.cssText = 'font-size:12px;line-height:1.4;margin:4px 0 0;user-select:none;';
+            bar.className = className;
+            bar.style.cssText = 'font-size:12px;line-height:1.4;margin:4px 8px;user-select:none;';
             return bar;
         },
 
@@ -519,38 +520,61 @@ Ignore ts-mention tags when determining if the language of the text.`
             }
         },
 
-        async translateInput(targetElement) {
-            if (!PROVIDERS[HELPERS.storage.provider].ready()) {
-                openSettings();
-                return;
-            }
-
-            const input = targetElement
+        resolveInput(targetElement) {
+            return targetElement
                 .closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
                 ?.querySelector(CONSTANTS.SELECTORS.INPUT) ??
                 targetElement
                 .closest(CONSTANTS.SELECTORS.MESSAGE)
                 ?.querySelector(CONSTANTS.SELECTORS.INPUT);
+        },
+
+        getOrCreateInputStatusBar(input) {
+            const container = input.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER) ?? input.parentElement;
+            const existing = container.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
+            if (existing) return existing;
+            const bar = UI.createStatusBar(CONSTANTS.CLASSES.INPUT_STATUS);
+            container.appendChild(bar);
+            return bar;
+        },
+
+        async translateInput(input) {
             if (!input) return;
+            if (!PROVIDERS[HELPERS.storage.provider].ready()) {
+                openSettings();
+                return;
+            }
+
+            const bar = this.getOrCreateInputStatusBar(input);
+            if (bar.dataset.state === 'pending') return;
+            bar.dataset.state = 'pending';
+            UI.setStatus(bar, 'Translating...', null);
 
             const original = input.innerHTML;
-            input.innerHTML = 'Translating...';
 
             try {
                 const translatedText = await TranslationService.translate(original);
                 const sanitizedText = translatedText
                     .replace(/(?:<p>(?:<br\s*\/?>|[\s\\n\r]*)<\/p>[\s\r\n]*)+$/gmi, '')
                     .replace(/[\r\n]+$/g, '');
-                input.innerHTML = sanitizedText;
+                // discard the result if the user kept typing while the request was in flight
+                if (input.innerHTML === original) input.innerHTML = sanitizedText;
+                bar.remove();
             } catch (error) {
                 console.error('Translation error:', error);
-                input.innerHTML = original;
-                if (error.authError) {
-                    openSettings();
-                } else {
-                    alert(error.message);
-                }
+                bar.dataset.state = 'error';
+                UI.setStatus(bar, 'Translation failed.', 'Retry', error.message);
+                if (error.authError) openSettings();
             }
+        },
+
+        handleInputStatusBarClick(bar) {
+            if (bar.dataset.state !== 'error') return;
+            const input = bar.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
+                ?.querySelector(CONSTANTS.SELECTORS.INPUT) ??
+                bar.parentElement?.querySelector(CONSTANTS.SELECTORS.INPUT);
+            bar.remove();
+            if (input) this.translateInput(input);
         },
 
         swapDialogBody(dialog, provider) {
@@ -607,6 +631,7 @@ Ignore ts-mention tags when determining if the language of the text.`
                         </label>
                         ${modelDatalist}
                         <p>Setup: install Ollama from <a href="https://ollama.com" target="_blank">ollama.com</a>, then run <code>ollama pull ${CONSTANTS.DEFAULTS.OLLAMA_MODEL}</code>. No API key needed; nothing leaves your machine.</p>
+                        <p>Use a 4b-parameter model or larger: 1b-class models (e.g. gemma3:1b) receive the translation prompt but are too weak to follow it and tend to echo the message back untranslated. Larger models (e.g. gemma4) also preserve message formatting like links and mentions more reliably.</p>
                         <p>If translations fail with a connection or 403 error, quit Ollama and restart it with <code>OLLAMA_ORIGINS=*</code> set (e.g. <code>OLLAMA_ORIGINS=* ollama serve</code>).</p>`;
                     dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_HOST}`).value = storage.ollamaHost;
                     dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_MODEL}`).value = storage.ollamaModel;
@@ -666,6 +691,12 @@ Ignore ts-mention tags when determining if the language of the text.`
 
     // Event Listeners
     document.body.addEventListener('click', async (event) => {
+        const inputStatusBar = event.target.closest(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
+        if (inputStatusBar) {
+            UIManager.handleInputStatusBarClick(inputStatusBar);
+            return;
+        }
+
         const statusBar = event.target.closest(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
         if (statusBar) {
             UIManager.handleStatusBarClick(statusBar);
@@ -680,7 +711,7 @@ Ignore ts-mention tags when determining if the language of the text.`
 
         const targetInputButton = event.target.closest(`.${CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON}`);
         if (targetInputButton) {
-            await UIManager.translateInput(targetInputButton);
+            await UIManager.translateInput(UIManager.resolveInput(targetInputButton));
         }
     });
 
