@@ -2,7 +2,7 @@
 // @name         Gmeet Standup Roster
 // @namespace    http://tampermonkey.net/
 // @icon         https://meet.google.com/favicon.ico
-// @version      2026.06.25.1
+// @version      2026.07.06
 // @description  Marks who has talked directly in Google Meet's People panel - auto-detected from the grid even before the panel is opened, manually toggleable
 // @author       KakkoiDev
 // @match        https://meet.google.com/*
@@ -42,8 +42,7 @@
     // (stable), never hashed presentational classes.
     const SEL = {
         panel: 'div[data-panel-id="1"]', // People panel container
-        list: '[role="list"]', // participants list inside the panel
-        item: '[role="listitem"]', // one participant row in the panel
+        item: '[role="listitem"]', // one participant row in the panel (any section)
         gridTile: '[data-participant-id]:not([role="listitem"])', // a video-grid tile
         eq: '[jsname="QgSmzd"]', // audio equalizer; class churns while speaking (jsname, no stable alt)
     };
@@ -149,18 +148,18 @@
         // Detection: every grid tile (present even while the People panel is closed).
         document.querySelectorAll(SEL.gridTile).forEach((tile) => scanEq(tile, now));
 
-        // When the panel is open: also scan its rows, and render the badges.
+        // When the panel is open: scan rows across ALL sections (raised-hands group +
+        // main list), and render the badges. querySelectorAll, not querySelector, so
+        // every section is covered - one person can appear in more than one block.
         const panel = document.querySelector(SEL.panel);
-        const list = panel && panel.querySelector(SEL.list);
-        if (list) {
-            list.querySelectorAll(SEL.item).forEach((li) => {
-                const pid = li.getAttribute('data-participant-id');
-                if (!pid) return;
-                const p = getPerson(pid);
-                scanEq(li, now);
-                injectRow(li, p);
-            });
-        }
+        const rows = panel ? panel.querySelectorAll(SEL.item) : [];
+        rows.forEach((li) => {
+            const pid = li.getAttribute('data-participant-id');
+            if (!pid) return;
+            const p = getPerson(pid);
+            scanEq(li, now);
+            injectRow(li, p);
+        });
 
         // Finalize speaking/talked: speaking needs >=N equalizer changes in the window.
         people.forEach((p, pid) => {
@@ -170,14 +169,12 @@
             if (DEBUG && p.speaking) console.log('[standup] speaking:', pid.slice(-6), p.stamps.length);
         });
 
-        // Paint panel rows from the now-final state.
-        if (list) {
-            list.querySelectorAll(SEL.item).forEach((li) => {
-                const pid = li.getAttribute('data-participant-id');
-                const p = pid && people.get(pid);
-                if (p) paintRow(li, p);
-            });
-        }
+        // Paint every block (all sections) from the now-final state.
+        rows.forEach((li) => {
+            const pid = li.getAttribute('data-participant-id');
+            const p = pid && people.get(pid);
+            if (p) paintRow(li, p);
+        });
     }
 
     setInterval(tick, TICK_MS);
