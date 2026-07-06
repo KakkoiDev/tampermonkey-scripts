@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.8
+// @version      2026.07.06.10
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -38,6 +38,7 @@
             INPUT_WRAPPER: '.p-message_pane_input_inner_main',
             INPUT_CONTAINER: '[data-qa="message_input_container"]',
             WYSIWYG_CONTAINER: '.c-wysiwyg_container',
+            QL_CONTAINER: '.ql-container',
             MESSAGE_TOOLBAR: '.c-message_actions__container',
             MESSAGE_DISPLAY: '.p-rich_text_block',
             MESSAGE_BLOCKS: '.c-message_kit__blocks',
@@ -534,18 +535,22 @@ Ignore ts-mention tags when determining if the language of the text.`
                 ?.querySelector(CONSTANTS.SELECTORS.INPUT);
         },
 
-        inputStatusAnchor(input) {
-            return input.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
-                ?? input.closest(CONSTANTS.SELECTORS.WYSIWYG_CONTAINER)
+        // scope containing both the input and its status bar, for lookups
+        inputStatusScope(input) {
+            return input.closest(CONSTANTS.SELECTORS.WYSIWYG_CONTAINER)
+                ?? input.closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
                 ?? input.parentElement;
         },
 
         getOrCreateInputStatusBar(input) {
-            const container = this.inputStatusAnchor(input);
-            const existing = container.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
+            const scope = this.inputStatusScope(input);
+            const existing = scope.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`);
             if (existing) return existing;
             const bar = UI.createStatusBar(CONSTANTS.CLASSES.INPUT_STATUS);
-            container.appendChild(bar);
+            // directly under the typed text, above the composer's footer buttons
+            const qlContainer = input.closest(CONSTANTS.SELECTORS.QL_CONTAINER);
+            if (qlContainer) qlContainer.insertAdjacentElement('afterend', bar);
+            else scope.appendChild(bar);
             return bar;
         },
 
@@ -553,7 +558,7 @@ Ignore ts-mention tags when determining if the language of the text.`
             const entry = InputTranslationStore.get(input);
             if (entry?.onEdit) input.removeEventListener('input', entry.onEdit);
             InputTranslationStore.delete(input);
-            this.inputStatusAnchor(input)?.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`)?.remove();
+            this.inputStatusScope(input)?.querySelector(`.${CONSTANTS.CLASSES.INPUT_STATUS}`)?.remove();
         },
 
         async translateInput(input) {
