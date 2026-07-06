@@ -1,23 +1,27 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.06.04.1
+// @version      2026.07.06.2
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAFGmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNi4wLWMwMDIgNzkuMTY0NDg4LCAyMDIwLzA3LzEwLTIyOjA2OjUzICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgMjIuMCAoTWFjaW50b3NoKSIgeG1wOkNyZWF0ZURhdGU9IjIwMjAtMTItMDhUMTU6Mjg6MzItMDg6MDAiIHhtcDpNb2RpZnlEYXRlPSIyMDIwLTEyLTA4VDE1OjMxOjA2LTA4OjAwIiB4bXA6TWV0YWRhdGFEYXRlPSIyMDIwLTEyLTA4VDE1OjMxOjA2LTA4OjAwIiBkYzpmb3JtYXQ9ImltYWdlL3BuZyIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOmE0YTc2OTg1LTE3NmMt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
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      generativelanguage.googleapis.com
+// @connect      api.anthropic.com
+// @connect      localhost
+// @connect      127.0.0.1
 // @license      MIT
 // ==/UserScript==
 
 // TODO:
 // [x] The input translation doesn't work in the thread feed & in normal thread
 // [x] The message translate button doesn't work at all
-// [ ] Use prettier loading icon than 🔄
+// [x] Use prettier loading icon than the rotating emoji (replaced by a status link under the message)
 // [ ] Improve dialog styling
 // [ ] Remove the translate button from images' toolbars
 // [ ] Add a | separator in the input toolbar to separate the translation icon from the other ones
-// [>] Add an option to connect to a local Ollama model
+// [x] Add an option to connect to a local Ollama model
 // [x] Add right click open settings dialog
 // [x] Add hover tooltip: "Translate\n[right click to open settings]"
 // [ ] Improve tooltip styling
@@ -34,60 +38,265 @@
             INPUT_WRAPPER: '.p-message_pane_input_inner_main',
             INPUT_CONTAINER: '[data-qa="message_input_container"]',
             MESSAGE_TOOLBAR: '.c-message_actions__container',
-            MESSAGE_DISPLAY: '.p-rich_text_block'
+            MESSAGE_DISPLAY: '.p-rich_text_block',
+            TIMESTAMP: '.c-timestamp'
         },
         CLASSES: {
             TRANSLATE_MESSAGE_BUTTON: 'translate-message-button',
             TRANSLATE_INPUT_BUTTON: 'translate-input-button',
-            MODEL_SELECT: 'model-select',
-            DIALOG_BODY: 'dialog-body'
+            PROVIDER_SELECT: 'translate-provider-select',
+            DIALOG_BODY: 'translate-dialog-body',
+            STATUS_LINK: 'translate-status-link',
+            PROMPT_TEXTAREA: 'translate-prompt-textarea',
+            PROMPT_RESET: 'translate-prompt-reset',
+            PROVIDER_API_KEY: 'translate-provider-api-key',
+            PROVIDER_MODEL: 'translate-provider-model',
+            PROVIDER_HOST: 'translate-provider-host'
         },
         TYPES: {
             MESSAGE: 'message',
-            INPUT: 'input',
-            MODEL_SELECT_REMOTE: 'gemini',
-            MODEL_SELECT_LOCAL: 'local'
+            INPUT: 'input'
         },
         STORAGE: {
-            API_KEY: 'slack-ai-translator-api-key',
-            REMOTE_OR_LOCAL_MODEL_SELECT: 'slack-ai-translator-remote-or-local-model-select',
-            LOCAL_MODEL_HOST: 'slack-ai-translator-local-model-host',
-            LOCAL_MODEL_NAME: 'slack-ai-translator-local-model-name'
+            PROVIDER: 'slack-ai-translator-provider',
+            GEMINI_API_KEY: 'slack-ai-translator-api-key',
+            CLAUDE_API_KEY: 'slack-ai-translator-claude-api-key',
+            GEMINI_MODEL: 'slack-ai-translator-gemini-model',
+            CLAUDE_MODEL: 'slack-ai-translator-claude-model',
+            OLLAMA_HOST: 'slack-ai-translator-local-model-host',
+            OLLAMA_MODEL: 'slack-ai-translator-local-model-name',
+            PROMPT: 'slack-ai-translator-prompt'
         },
-        STATE: {
-            DEFAULT_LOCAL_MODEL_NAME: 'gemma3:1b'
+        DEFAULTS: {
+            GEMINI_MODEL: 'gemini-flash-latest',
+            CLAUDE_MODEL: 'claude-haiku-4-5',
+            OLLAMA_HOST: 'http://localhost:11434',
+            OLLAMA_MODEL: 'gemma3:1b',
+            PROMPT: `You are a translation engine. Translate the following text between Japanese and English.
+Respond with ONLY the translated text, with NO extra words, explanations, or greetings.
+Do NOT include the original text, do NOT say "here is the translation", do NOT add any comments.
+If the text is already in English, translate to Japanese. If it's in Japanese, translate to English.
+Keep emojis. Do NOT show alternative translations.
+If the text is not in Japanese or English, respond with "N/A".
+Do not modify the HTML tags. Preserve them.
+Do not modify anything inside the ts-mention tags.
+Ignore ts-mention tags when determining if the language of the text.`
         },
-        API: {
-            BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
-            LOCAL_MODEL_HOST: 'http://localhost:11434/api/generate'
+        MODEL_SUGGESTIONS: {
+            gemini: ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest'],
+            claude: ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-8'],
+            ollama: ['gemma3:1b', 'gemma3:4b', 'qwen3:4b']
         }
     };
+
+    class TranslationError extends Error {
+        constructor(message, { authError = false } = {}) {
+            super(message);
+            this.authError = authError;
+        }
+    }
 
     // Helpers
     const HELPERS = {
         storage: {
-            get apiKey() {
-                return localStorage.getItem(CONSTANTS.STORAGE.API_KEY);
+            get provider() {
+                // legacy '-remote-or-local-model-select' is ignored on purpose: the old
+                // script persisted it on select change but never implemented the local
+                // path, so its value never reflected a working configuration
+                return localStorage.getItem(CONSTANTS.STORAGE.PROVIDER) || 'gemini';
             },
-            set apiKey(value) {
-                localStorage.setItem(CONSTANTS.STORAGE.API_KEY, value);
+            set provider(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.PROVIDER, value);
             },
 
-            get model() {
-                return localStorage.getItem(CONSTANTS.STORAGE.REMOTE_OR_LOCAL_MODEL_SELECT);
+            get geminiApiKey() {
+                return localStorage.getItem(CONSTANTS.STORAGE.GEMINI_API_KEY);
             },
-            set model(value) {
-                localStorage.setItem(CONSTANTS.STORAGE.REMOTE_OR_LOCAL_MODEL_SELECT, value);
+            set geminiApiKey(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.GEMINI_API_KEY, value);
+            },
+
+            get claudeApiKey() {
+                return localStorage.getItem(CONSTANTS.STORAGE.CLAUDE_API_KEY);
+            },
+            set claudeApiKey(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.CLAUDE_API_KEY, value);
+            },
+
+            get geminiModel() {
+                return localStorage.getItem(CONSTANTS.STORAGE.GEMINI_MODEL) || CONSTANTS.DEFAULTS.GEMINI_MODEL;
+            },
+            set geminiModel(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.GEMINI_MODEL, value);
+            },
+
+            get claudeModel() {
+                return localStorage.getItem(CONSTANTS.STORAGE.CLAUDE_MODEL) || CONSTANTS.DEFAULTS.CLAUDE_MODEL;
+            },
+            set claudeModel(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.CLAUDE_MODEL, value);
+            },
+
+            get ollamaHost() {
+                const raw = localStorage.getItem(CONSTANTS.STORAGE.OLLAMA_HOST) || CONSTANTS.DEFAULTS.OLLAMA_HOST;
+                // tolerate values pasted with the endpoint path or a trailing slash
+                return raw.replace(/\/api\/(generate|chat)\/?$/, '').replace(/\/+$/, '');
+            },
+            set ollamaHost(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.OLLAMA_HOST, value);
+            },
+
+            get ollamaModel() {
+                return localStorage.getItem(CONSTANTS.STORAGE.OLLAMA_MODEL) || CONSTANTS.DEFAULTS.OLLAMA_MODEL;
+            },
+            set ollamaModel(value) {
+                localStorage.setItem(CONSTANTS.STORAGE.OLLAMA_MODEL, value);
+            },
+
+            get prompt() {
+                return localStorage.getItem(CONSTANTS.STORAGE.PROMPT) || CONSTANTS.DEFAULTS.PROMPT;
+            },
+            set prompt(value) {
+                const trimmed = (value ?? '').trim();
+                // unset when empty or identical to the default so future default improvements reach the user
+                if (!trimmed || trimmed === CONSTANTS.DEFAULTS.PROMPT) {
+                    localStorage.removeItem(CONSTANTS.STORAGE.PROMPT);
+                } else {
+                    localStorage.setItem(CONSTANTS.STORAGE.PROMPT, trimmed);
+                }
             }
+        },
+
+        httpPost({ url, headers, body }) {
+            return new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: 'POST',
+                    url,
+                    headers: { 'Content-Type': 'application/json', ...headers },
+                    data: JSON.stringify(body),
+                    timeout: 60000,
+                    onload: (response) => {
+                        let json = null;
+                        try { json = JSON.parse(response.responseText); } catch (e) { /* non-JSON body */ }
+                        resolve({ status: response.status, json });
+                    },
+                    onerror: () => reject(new Error(`Network error reaching ${url}`)),
+                    ontimeout: () => reject(new Error(`Request timed out reaching ${url}`))
+                });
+            });
+        }
+    };
+
+    // Translation Service
+    const PROVIDERS = {
+        gemini: {
+            label: 'Gemini',
+            ready: () => !!HELPERS.storage.geminiApiKey,
+            request: (text, prompt) => ({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/${HELPERS.storage.geminiModel}:generateContent?key=${HELPERS.storage.geminiApiKey}`,
+                headers: {},
+                body: { contents: [{ parts: [{ text: prompt }, { text }] }] }
+            }),
+            parse: (json) => json?.candidates?.[0]?.content?.parts?.[0]?.text,
+            errorMessage: (status, json) => json?.error?.message,
+            isAuthError: (status) => status === 400 || status === 403
+        },
+        claude: {
+            label: 'Claude',
+            ready: () => !!HELPERS.storage.claudeApiKey,
+            request: (text, prompt) => ({
+                url: 'https://api.anthropic.com/v1/messages',
+                headers: {
+                    'x-api-key': HELPERS.storage.claudeApiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: {
+                    model: HELPERS.storage.claudeModel,
+                    max_tokens: 8192,
+                    system: prompt,
+                    messages: [{ role: 'user', content: text }]
+                }
+            }),
+            parse: (json) => (json?.content || []).filter((block) => block.type === 'text').map((block) => block.text).join(''),
+            errorMessage: (status, json) => json?.error?.message,
+            isAuthError: (status) => status === 401 || status === 403
+        },
+        ollama: {
+            label: 'Ollama (local)',
+            ready: () => true,
+            request: (text, prompt) => ({
+                url: `${HELPERS.storage.ollamaHost}/api/chat`,
+                headers: {},
+                body: {
+                    model: HELPERS.storage.ollamaModel,
+                    stream: false,
+                    messages: [
+                        { role: 'system', content: prompt },
+                        { role: 'user', content: text }
+                    ]
+                }
+            }),
+            parse: (json) => json?.message?.content,
+            errorMessage: (status, json) => json?.error || `HTTP ${status}`,
+            isAuthError: () => false
+        }
+    };
+
+    const TranslationService = {
+        async translate(text) {
+            const providerId = HELPERS.storage.provider;
+            const provider = PROVIDERS[providerId];
+            const prompt = HELPERS.storage.prompt;
+
+            let result;
+            try {
+                result = await HELPERS.httpPost(provider.request(text, prompt));
+            } catch (networkError) {
+                if (providerId === 'ollama') {
+                    throw new TranslationError(`Cannot reach Ollama at ${HELPERS.storage.ollamaHost}. Is it running? If it rejects requests from the browser, restart it with OLLAMA_ORIGINS=*`);
+                }
+                throw new TranslationError(networkError.message);
+            }
+
+            const { status, json } = result;
+            if (status < 200 || status >= 300) {
+                throw new TranslationError(
+                    provider.errorMessage(status, json) || `HTTP ${status}`,
+                    { authError: provider.isAuthError(status, json) }
+                );
+            }
+
+            const translated = provider.parse(json);
+            if (!translated) {
+                throw new TranslationError(`Empty response from ${providerId}`);
+            }
+            return translated;
+        }
+    };
+
+    // Per-message translation state, keyed by message ts.
+    // Entries survive Slack's virtual-list recycling; the MutationObserver re-applies them.
+    const TranslationStore = {
+        MAX_ENTRIES: 200,
+        map: new Map(),
+        get(key) {
+            return key ? this.map.get(key) : undefined;
+        },
+        set(key, entry) {
+            if (!this.map.has(key) && this.map.size >= this.MAX_ENTRIES) {
+                this.map.delete(this.map.keys().next().value);
+            }
+            this.map.set(key, entry);
+        },
+        delete(key) {
+            this.map.delete(key);
         }
     };
 
     // UI Components
     const UI = {
         translateSVG: '<svg data-xxz="true" data-qa="globe" aria-hidden="true" viewBox="0 0 20 20" class="" width="18" height="18"><path fill="currentColor" fill-rule="evenodd" d="M2.537 9.25a7.51 7.51 0 0 1 5.784-6.561c-.91 1.577-1.891 3.86-2.049 6.561zM10 2.815c-.905 1.41-2.044 3.691-2.225 6.435h4.45c-.181-2.744-1.32-5.025-2.225-6.435m2.225 7.935h-4.45c.181 2.744 1.32 5.025 2.225 6.435.905-1.41 2.044-3.691 2.225-6.435m-.546 6.561c.91-1.577 1.891-3.86 2.05-6.561h3.734a7.51 7.51 0 0 1-5.784 6.561m2.05-8.061c-.159-2.7-1.14-4.984-2.05-6.561a7.51 7.51 0 0 1 5.784 6.561zm-11.192 1.5h3.735c.158 2.7 1.138 4.984 2.05 6.561a7.505 7.505 0 0 1-5.785-6.561M10 1a9 9 0 1 0 0 18 9 9 0 0 0 0-18" clip-rule="evenodd"></path></svg>',
-
-        //spinnerElement: '<div data-qa="infinite_spinner" class="c-infinite_spinner c-infinite_spinner--jumbo c-infinite_spinner--blue"><svg role="img" aria-hidden="true" viewBox="0 0 100 100" class="c-infinite_spinner__spinner c-infinite_spinner__spinner"><circle class="c-infinite_spinner__bg" cx="50%" cy="50%" r="35"></circle><circle class="c-infinite_spinner__path" cx="50%" cy="50%" r="35"></circle></svg><svg role="img" aria-hidden="true" viewBox="0 0 100 100" class="c-infinite_spinner__spinner c-infinite_spinner__spinner c-infinite_spinner__tail"><circle class="c-infinite_spinner__path" cx="50%" cy="50%" r="35"></circle></svg></div>',
-        spinnerElement: '🔄',
 
         createTranslateButton(type) {
             const buttonClass = type === CONSTANTS.TYPES.MESSAGE
@@ -111,18 +320,33 @@
             return wrapper.firstElementChild;
         },
 
-        createApiKeyDialog() {
+        createStatusLink() {
+            const link = document.createElement('span');
+            link.className = CONSTANTS.CLASSES.STATUS_LINK;
+            link.style.cssText = 'display:block;font-size:11px;line-height:1.4;opacity:.6;cursor:pointer;user-select:none;margin:2px 0 0;';
+            return link;
+        },
+
+        createSettingsDialog() {
             const dialog = document.createElement('dialog');
             dialog.setAttribute('closedby', 'any');
+            dialog.style.cssText = 'max-width:480px;';
             dialog.innerHTML = `
                 <label>
-                    Choose your model:
-                    <select class="${CONSTANTS.CLASSES.REMOTE_OR_LOCAL_MODEL_SELECT}" name="model">
-                        <option value="${CONSTANTS.TYPES.MODEL_SELECT_REMOTE}">${CONSTANTS.TYPES.MODEL_SELECT_REMOTE}</option>
-                        <option value="${CONSTANTS.TYPES.MODEL_SELECT_LOCAL}">${CONSTANTS.TYPES.MODEL_SELECT_LOCAL}</option>
+                    Provider:
+                    <select class="${CONSTANTS.CLASSES.PROVIDER_SELECT}" name="provider">
+                        <option value="gemini">Gemini</option>
+                        <option value="claude">Claude (Anthropic)</option>
+                        <option value="ollama">Ollama (local)</option>
                     </select>
                 </label>
                 <div class="${CONSTANTS.CLASSES.DIALOG_BODY}"></div>
+                <hr>
+                <label style="display:block;">
+                    Translation prompt:
+                    <textarea class="${CONSTANTS.CLASSES.PROMPT_TEXTAREA}" rows="10" style="width:100%;box-sizing:border-box;"></textarea>
+                </label>
+                <button type="button" class="${CONSTANTS.CLASSES.PROMPT_RESET}">Reset prompt to default</button>
                 <form method="dialog">
                     <div>
                         <button value="cancel">Cancel</button>
@@ -130,49 +354,6 @@
                     </div>
                 </form>`;
             return dialog;
-        }
-    };
-
-    // Translation Service
-    const TranslationService = {
-        async translate(text, apiKey) {
-            const data = {
-                contents: [{
-                    parts: [{
-                        text: `
-You are a translation engine. Translate the following text between Japanese and English.
-Respond with ONLY the translated text, with NO extra words, explanations, or greetings.
-Do NOT include the original text, do NOT say "here is the translation", do NOT add any comments.
-If the text is already in English, translate to Japanese. If it's in Japanese, translate to English.
-Keep emojis. Do NOT show alternative translations.
-If the text is not in Japanese or English, respond with "N/A".
-Do not modify the HTML tags. Preserve them.
-Do not modify anything inside the ts-mention tags.
-Ignore ts-mention tags when determining if the language of the text.
-                        `
-                    }, {
-                        text: text
-                    }]
-                }]
-            };
-
-            try {
-                const response = await fetch(`${CONSTANTS.API.BASE_URL}?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-
-                if (result.error) {
-                    throw new Error(result.error.message);
-                }
-
-                return result?.candidates?.[0]?.content?.parts?.[0]?.text;
-            } catch (error) {
-                console.error('Translation error:', error);
-                throw error;
-            }
         }
     };
 
@@ -195,122 +376,305 @@ Ignore ts-mention tags when determining if the language of the text.
             }
         },
 
-        async handleTranslation(targetElement, mode) {
-            const apiKey = HELPERS.storage.apiKey;
-            if (!apiKey) {
-                dialog.showModal();
-                return;
-            }
-
-            let original, setLoading, setResult;
-
-            if (mode === CONSTANTS.TYPES.MESSAGE) {
-                const messageDisplayContainer = targetElement
-                    .closest(CONSTANTS.SELECTORS.MESSAGE)
-                    .querySelector(CONSTANTS.SELECTORS.MESSAGE_DISPLAY);
-                original = messageDisplayContainer.innerHTML;
-                setLoading = () => { messageDisplayContainer.innerHTML = UI.spinnerElement };
-                setResult = (text) => { messageDisplayContainer.innerHTML = text };
-            } else if (mode === CONSTANTS.TYPES.INPUT) {
-                const input = targetElement
-                    .closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
-                    ?.querySelector(CONSTANTS.SELECTORS.INPUT) ??
-                    targetElement
-                    .closest(CONSTANTS.SELECTORS.MESSAGE)
-                    ?.querySelector(CONSTANTS.SELECTORS.INPUT);
-                original = input.innerHTML;
-                setLoading = () => { input.innerHTML = UI.spinnerElement };
-                setResult = (text) => {
-                    const sanitizedText = text
-                        .replace(/(?:<p>(?:<br\s*\/?>|[\s\\n\r]*)<\/p>[\s\r\n]*)+$/gmi, '')
-                        .replace(/[\r\n]+$/g, '');
-                    input.innerHTML = sanitizedText;
-                };
-            }
-
-            try {
-                setLoading();
-                const translatedText = await TranslationService.translate(original, apiKey);
-                setResult(translatedText ?? original);
-            } catch (error) {
-                if (error.message.includes('400')) {
-                    dialog.showModal();
-                } else {
-                    alert(error.message);
+        extractTs(item, { create = false } = {}) {
+            if (!item) return null;
+            const dataTs = item.querySelector(CONSTANTS.SELECTORS.TIMESTAMP)?.getAttribute('data-ts');
+            if (dataTs) return dataTs;
+            if (item.id) return item.id;
+            if (create) {
+                // no stable ts found: mint a node-bound key (lost on recycle, same as pre-store behavior)
+                if (!item.dataset.aiTranslateKey) {
+                    item.dataset.aiTranslateKey = `k${Date.now()}${Math.floor(Math.random() * 1e6)}`;
                 }
-                setResult(original);
+            }
+            return item.dataset.aiTranslateKey || null;
+        },
+
+        getOrCreateStatusLink(messageDisplay) {
+            const existing = messageDisplay.parentElement.querySelector(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
+            if (existing) return existing;
+            const link = UI.createStatusLink();
+            messageDisplay.insertAdjacentElement('afterend', link);
+            return link;
+        },
+
+        applyEntryToMessage(messageDisplay, entry) {
+            const link = this.getOrCreateStatusLink(messageDisplay);
+            if (entry.showing === 'translated') {
+                if (messageDisplay.innerHTML !== entry.translated) messageDisplay.innerHTML = entry.translated;
+                link.textContent = 'see original';
+            } else {
+                if (messageDisplay.innerHTML !== entry.original) messageDisplay.innerHTML = entry.original;
+                link.textContent = 'see translation';
             }
         },
 
-        swapDialogBody(dialog, model) {
-            const dialogBody = dialog.querySelector(`.${CONSTANTS.CLASSES.DIALOG_BODY}`);
+        toggleMessage(messageDisplay, entry) {
+            entry.showing = entry.showing === 'translated' ? 'original' : 'translated';
+            this.applyEntryToMessage(messageDisplay, entry);
+        },
 
-            switch(model) {
-                case CONSTANTS.TYPES.MODEL_SELECT_REMOTE: {
-                        const apiKey = HELPERS.storage.apiKey ?? '';
-                        dialogBody.innerHTML = `
-                        <label>
-                            Enter your API key:
-                            <input value="${apiKey}">
-                        </label>
-                        <p>You can get your free Gemini AI API key <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank">here</a>.</p>
-                        <p>⚠️ The API key will be stored unencrypted in you browser's local storage!</p>
-                        <p>⚠️ Google will own what ever data you pass to it 😔<br>More information <a href="https://support.google.com/gemini/answer/13594961?hl=en#your_data" target="_blank">here</a>.</p>
-                        `;
-                    break;
+        async translateMessage(item) {
+            if (!item) return;
+            const messageDisplay = item.querySelector(CONSTANTS.SELECTORS.MESSAGE_DISPLAY);
+            if (!messageDisplay) return;
+
+            const key = this.extractTs(item, { create: true });
+            const existing = TranslationStore.get(key);
+            if (existing?.state === 'pending') return;
+            if (existing?.state === 'done') {
+                this.toggleMessage(messageDisplay, existing);
+                return;
+            }
+
+            if (!PROVIDERS[HELPERS.storage.provider].ready()) {
+                openSettings();
+                return;
+            }
+
+            const entry = {
+                original: messageDisplay.innerHTML,
+                translated: null,
+                showing: 'original',
+                state: 'pending',
+                errorMessage: null
+            };
+            TranslationStore.set(key, entry);
+
+            const link = this.getOrCreateStatusLink(messageDisplay);
+            link.textContent = 'translating...';
+            link.title = '';
+
+            try {
+                const translated = await TranslationService.translate(entry.original);
+                entry.translated = translated;
+                entry.showing = 'translated';
+                entry.state = 'done';
+                if (messageDisplay.isConnected) this.applyEntryToMessage(messageDisplay, entry);
+            } catch (error) {
+                console.error('Translation error:', error);
+                entry.state = 'error';
+                entry.errorMessage = error.message;
+                if (messageDisplay.isConnected) {
+                    link.textContent = 'translation failed - click to retry';
+                    link.title = error.message;
                 }
-                case CONSTANTS.TYPES.MODEL_SELECT_LOCAL:
+                if (error.authError) openSettings();
+            }
+        },
+
+        handleStatusLinkClick(link) {
+            const item = link.closest(CONSTANTS.SELECTORS.MESSAGE);
+            const messageDisplay = item?.querySelector(CONSTANTS.SELECTORS.MESSAGE_DISPLAY);
+            if (!messageDisplay) return;
+            const key = this.extractTs(item);
+            const entry = TranslationStore.get(key);
+            if (!entry) {
+                link.remove();
+                return;
+            }
+            if (entry.state === 'pending') return;
+            if (entry.state === 'error') {
+                TranslationStore.delete(key);
+                this.translateMessage(item);
+                return;
+            }
+            this.toggleMessage(messageDisplay, entry);
+        },
+
+        // Slack's virtual list recycles DOM nodes on scroll; re-apply stored translations
+        // when a message re-renders. Best-effort: if the shell renders before the
+        // rich-text child, the second trigger (added .p-rich_text_block) catches it.
+        reapplyTranslations(messageDisplays) {
+            for (const messageDisplay of messageDisplays) {
+                const item = messageDisplay.closest(CONSTANTS.SELECTORS.MESSAGE);
+                if (!item) continue;
+                // only the message's canonical (first) rich-text block carries the translation;
+                // nested blocks (quotes, attachments) must not be mistaken for an edited message
+                if (item.querySelector(CONSTANTS.SELECTORS.MESSAGE_DISPLAY) !== messageDisplay) continue;
+                const key = this.extractTs(item);
+                const entry = TranslationStore.get(key);
+                if (!entry || entry.state !== 'done') continue;
+                if (messageDisplay.innerHTML === entry.translated) {
+                    this.applyEntryToMessage(messageDisplay, entry);
+                    continue;
+                }
+                if (messageDisplay.innerHTML !== entry.original) {
+                    // message was edited since translation: never clobber the edit
+                    TranslationStore.delete(key);
+                    messageDisplay.parentElement.querySelector(`.${CONSTANTS.CLASSES.STATUS_LINK}`)?.remove();
+                    continue;
+                }
+                this.applyEntryToMessage(messageDisplay, entry);
+            }
+        },
+
+        async translateInput(targetElement) {
+            if (!PROVIDERS[HELPERS.storage.provider].ready()) {
+                openSettings();
+                return;
+            }
+
+            const input = targetElement
+                .closest(CONSTANTS.SELECTORS.INPUT_CONTAINER)
+                ?.querySelector(CONSTANTS.SELECTORS.INPUT) ??
+                targetElement
+                .closest(CONSTANTS.SELECTORS.MESSAGE)
+                ?.querySelector(CONSTANTS.SELECTORS.INPUT);
+            if (!input) return;
+
+            const original = input.innerHTML;
+            input.innerHTML = 'Translating...';
+
+            try {
+                const translatedText = await TranslationService.translate(original);
+                const sanitizedText = translatedText
+                    .replace(/(?:<p>(?:<br\s*\/?>|[\s\\n\r]*)<\/p>[\s\r\n]*)+$/gmi, '')
+                    .replace(/[\r\n]+$/g, '');
+                input.innerHTML = sanitizedText;
+            } catch (error) {
+                console.error('Translation error:', error);
+                input.innerHTML = original;
+                if (error.authError) {
+                    openSettings();
+                } else {
+                    alert(error.message);
+                }
+            }
+        },
+
+        swapDialogBody(dialog, provider) {
+            const dialogBody = dialog.querySelector(`.${CONSTANTS.CLASSES.DIALOG_BODY}`);
+            const storage = HELPERS.storage;
+            const modelDatalist = `
+                <datalist id="translate-model-suggestions">
+                    ${CONSTANTS.MODEL_SUGGESTIONS[provider].map((id) => `<option value="${id}"></option>`).join('')}
+                </datalist>`;
+
+            switch (provider) {
+                case 'gemini':
                     dialogBody.innerHTML = `
-                    <div>
-                        <label>
+                        <label style="display:block;">
+                            API key:
+                            <input class="${CONSTANTS.CLASSES.PROVIDER_API_KEY}">
+                        </label>
+                        <label style="display:block;">
+                            Model:
+                            <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
+                        </label>
+                        ${modelDatalist}
+                        <p>Get a free Gemini API key <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank">here</a>.</p>
+                        <p>Warning: the API key is stored unencrypted in your browser's local storage.</p>
+                        <p>Warning: Google will own whatever data you pass to it. More information <a href="https://support.google.com/gemini/answer/13594961?hl=en#your_data" target="_blank">here</a>.</p>`;
+                    dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_API_KEY}`).value = storage.geminiApiKey ?? '';
+                    dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_MODEL}`).value = storage.geminiModel;
+                    break;
+                case 'claude':
+                    dialogBody.innerHTML = `
+                        <label style="display:block;">
+                            API key:
+                            <input class="${CONSTANTS.CLASSES.PROVIDER_API_KEY}">
+                        </label>
+                        <label style="display:block;">
+                            Model:
+                            <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
+                        </label>
+                        ${modelDatalist}
+                        <p>Create an API key in the <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a> (requires an Anthropic account with credits).</p>
+                        <p>Warning: the API key is stored unencrypted in your browser's local storage and sent directly from your browser to api.anthropic.com.</p>`;
+                    dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_API_KEY}`).value = storage.claudeApiKey ?? '';
+                    dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_MODEL}`).value = storage.claudeModel;
+                    break;
+                case 'ollama':
+                    dialogBody.innerHTML = `
+                        <label style="display:block;">
                             Host:
-                            <input value="${CONSTANTS.API.LOCAL_MODEL_HOST}">
+                            <input class="${CONSTANTS.CLASSES.PROVIDER_HOST}">
                         </label>
-                        <br>
-                        <label>
-                            Model name:
-                            <input value="${CONSTANTS.STATE.DEFAULT_LOCAL_MODEL_NAME}">
+                        <label style="display:block;">
+                            Model:
+                            <input class="${CONSTANTS.CLASSES.PROVIDER_MODEL}" list="translate-model-suggestions">
                         </label>
-                    </div>
-                    `;
-                break;
-                default:
-                    dialogBody.innerHTML = `
-                    Error!
-                    `;
+                        ${modelDatalist}
+                        <p>Setup: install Ollama from <a href="https://ollama.com" target="_blank">ollama.com</a>, then run <code>ollama pull ${CONSTANTS.DEFAULTS.OLLAMA_MODEL}</code>. No API key needed; nothing leaves your machine.</p>
+                        <p>If translations fail with a connection or 403 error, quit Ollama and restart it with <code>OLLAMA_ORIGINS=*</code> set (e.g. <code>OLLAMA_ORIGINS=* ollama serve</code>).</p>`;
+                    dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_HOST}`).value = storage.ollamaHost;
+                    dialogBody.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_MODEL}`).value = storage.ollamaModel;
+                    break;
             }
         }
     };
 
     // Initialize
-    const dialog = UI.createApiKeyDialog();
-    dialog.addEventListener('close', () => {
-        if (dialog.returnValue === 'ok') {
-            const value = dialog.querySelector('input').value;
-            HELPERS.storage.apiKey = value;
-        }
-    });
-    dialog.querySelector(`.${CONSTANTS.CLASSES.REMOTE_OR_LOCAL_MODEL_SELECT}`).addEventListener('change', (event) => {
-        const value = event.target.value;
-        HELPERS.storage.model = value;
-        UIManager.swapDialogBody(dialog, value);
-    });
-    UIManager.swapDialogBody(dialog, CONSTANTS.TYPES.MODEL_SELECT_REMOTE);
+    const dialog = UI.createSettingsDialog();
     document.body.appendChild(dialog);
+
+    function openSettings() {
+        if (dialog.open) return;
+        // closedby="any" fires 'close' without setting returnValue; a stale 'ok' from a
+        // previous submit would otherwise persist fields on an outside-click dismissal
+        dialog.returnValue = '';
+        const provider = HELPERS.storage.provider;
+        dialog.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_SELECT}`).value = provider;
+        UIManager.swapDialogBody(dialog, provider);
+        dialog.querySelector(`.${CONSTANTS.CLASSES.PROMPT_TEXTAREA}`).value = HELPERS.storage.prompt;
+        dialog.showModal();
+    }
+
+    // pane swap only; nothing persists until OK
+    dialog.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_SELECT}`).addEventListener('change', (event) => {
+        UIManager.swapDialogBody(dialog, event.target.value);
+    });
+
+    dialog.querySelector(`.${CONSTANTS.CLASSES.PROMPT_RESET}`).addEventListener('click', () => {
+        dialog.querySelector(`.${CONSTANTS.CLASSES.PROMPT_TEXTAREA}`).value = CONSTANTS.DEFAULTS.PROMPT;
+    });
+
+    dialog.addEventListener('close', () => {
+        if (dialog.returnValue !== 'ok') return;
+        const storage = HELPERS.storage;
+        const provider = dialog.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_SELECT}`).value;
+        storage.provider = provider;
+
+        const apiKey = dialog.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_API_KEY}`)?.value.trim();
+        const model = dialog.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_MODEL}`)?.value.trim();
+        const host = dialog.querySelector(`.${CONSTANTS.CLASSES.PROVIDER_HOST}`)?.value.trim();
+
+        if (provider === 'gemini') {
+            if (apiKey != null) storage.geminiApiKey = apiKey;
+            storage.geminiModel = model || CONSTANTS.DEFAULTS.GEMINI_MODEL;
+        } else if (provider === 'claude') {
+            if (apiKey != null) storage.claudeApiKey = apiKey;
+            storage.claudeModel = model || CONSTANTS.DEFAULTS.CLAUDE_MODEL;
+        } else if (provider === 'ollama') {
+            storage.ollamaHost = host || CONSTANTS.DEFAULTS.OLLAMA_HOST;
+            storage.ollamaModel = model || CONSTANTS.DEFAULTS.OLLAMA_MODEL;
+        }
+
+        storage.prompt = dialog.querySelector(`.${CONSTANTS.CLASSES.PROMPT_TEXTAREA}`).value;
+    });
 
     // Event Listeners
     document.body.addEventListener('click', async (event) => {
-        const targetMessageButton = event.target.closest(`.${CONSTANTS.CLASSES.TRANSLATE_MESSAGE_BUTTON}`);
-        const targetInputButton = event.target.closest(`.${CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON}`);
+        const statusLink = event.target.closest(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
+        if (statusLink) {
+            UIManager.handleStatusLinkClick(statusLink);
+            return;
+        }
 
+        const targetMessageButton = event.target.closest(`.${CONSTANTS.CLASSES.TRANSLATE_MESSAGE_BUTTON}`);
         if (targetMessageButton) {
-            await UIManager.handleTranslation(targetMessageButton, CONSTANTS.TYPES.MESSAGE);
-        } else if (targetInputButton) {
-            await UIManager.handleTranslation(targetInputButton, CONSTANTS.TYPES.INPUT);
+            await UIManager.translateMessage(targetMessageButton.closest(CONSTANTS.SELECTORS.MESSAGE));
+            return;
+        }
+
+        const targetInputButton = event.target.closest(`.${CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON}`);
+        if (targetInputButton) {
+            await UIManager.translateInput(targetInputButton);
         }
     });
 
-    document.body.addEventListener('contextmenu', async (event) => {
+    document.body.addEventListener('contextmenu', (event) => {
         const targetInputButton = event.target.closest(`.${CONSTANTS.CLASSES.TRANSLATE_INPUT_BUTTON}`);
 
         if (targetInputButton) {
@@ -318,7 +682,7 @@ Ignore ts-mention tags when determining if the language of the text.
             // Wait for next mouseup
             // Needed because the dialog's closeby=any gets triggered on mouseup
             const handler = () => {
-                dialog.showModal();
+                openSettings();
                 document.removeEventListener('mouseup', handler);
             };
             document.addEventListener('mouseup', handler, {once: true});
@@ -327,7 +691,6 @@ Ignore ts-mention tags when determining if the language of the text.
 
     // Mutation Observer
     const observer = new MutationObserver((mutations) => {
-        console.log("");
         const allMutatedElementNodes = mutations
             .filter(mutation => mutation.type === 'childList')
             .flatMap(mutation => [...mutation.addedNodes])
@@ -343,6 +706,15 @@ Ignore ts-mention tags when determining if the language of the text.
         const addedInputToolbars = addedInputToolbarWrappers
             .flatMap(wrapper => [...wrapper.querySelectorAll(CONSTANTS.SELECTORS.INPUT_TOOLBAR)]);
         UIManager.addTranslateButtonToInput(addedInputToolbars);
+
+        // re-apply stored translations to recycled virtual-list nodes
+        const touchedDisplays = new Set(allMutatedElementNodes.flatMap(node => {
+            const displays = node.matches?.(CONSTANTS.SELECTORS.MESSAGE_DISPLAY)
+                ? [node]
+                : [...(node.querySelectorAll?.(CONSTANTS.SELECTORS.MESSAGE_DISPLAY) ?? [])];
+            return displays;
+        }));
+        if (touchedDisplays.size) UIManager.reapplyTranslations(touchedDisplays);
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
