@@ -26,6 +26,8 @@ The loaded file's own header is IGNORED at runtime - the loader is what Tampermo
 
 Full guide and gotchas: [DEVELOPMENT.md](docs/DEVELOPMENT.md). Publishing: [PUBLISHING.md](docs/PUBLISHING.md) + the `greasyfork` skill.
 
+**Pushing does NOT update Greasy Fork.** The auto-pull webhook is dead server-side (endpoint 403s every POST, diagnosed 2026-06-15, full details in PUBLISHING.md - do not re-debug it). After every push, run `node skills/greasyfork/scripts/release.mjs` to force the pull, and confirm with `node skills/greasyfork/scripts/verify.mjs` (local = published = raw). Never tell the user a push alone released anything.
+
 The user runs EVERY script through its local-file dev loader (live reload). So to debug a bug on a logged-in site, add temporary `console.log`s directly into the real `.user.js` (behind a `const DEBUG = true;` block), have the user reload the tab and paste the output, then strip the block before committing. Do NOT hand over a standalone console snippet - the file is already live-reloading, and in-file logs see the actual code path (which branch ran, real internal state). See [DEVELOPMENT.md](docs/DEVELOPMENT.md#debugging-on-a-logged-in-site).
 
 ## New scripts: target-site `@icon`
