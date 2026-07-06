@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Slack AI Translate
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.06.2
+// @version      2026.07.06.4
 // @description  Add English/Japanese translation button to Slack
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -39,7 +39,9 @@
             INPUT_CONTAINER: '[data-qa="message_input_container"]',
             MESSAGE_TOOLBAR: '.c-message_actions__container',
             MESSAGE_DISPLAY: '.p-rich_text_block',
-            TIMESTAMP: '.c-timestamp'
+            MESSAGE_BLOCKS: '.c-message_kit__blocks',
+            TIMESTAMP: '.c-timestamp',
+            TS_WRAPPER: '[data-message-ts]'
         },
         CLASSES: {
             TRANSLATE_MESSAGE_BUTTON: 'translate-message-button',
@@ -320,11 +322,17 @@ Ignore ts-mention tags when determining if the language of the text.`
             return wrapper.firstElementChild;
         },
 
-        createStatusLink() {
-            const link = document.createElement('span');
-            link.className = CONSTANTS.CLASSES.STATUS_LINK;
-            link.style.cssText = 'display:block;font-size:11px;line-height:1.4;opacity:.6;cursor:pointer;user-select:none;margin:2px 0 0;';
-            return link;
+        createStatusBar() {
+            const bar = document.createElement('div');
+            bar.className = CONSTANTS.CLASSES.STATUS_LINK;
+            bar.style.cssText = 'font-size:12px;line-height:1.4;margin:4px 0 0;user-select:none;';
+            return bar;
+        },
+
+        // label is muted plain text ("Translated."), action renders as a Slack-styled link button
+        setStatus(bar, label, action, title = '') {
+            bar.innerHTML = `${label ? `<span style="opacity:.7;">${label}</span> ` : ''}${action ? `<button class="c-link--button" type="button">${action}</button>` : ''}`;
+            bar.title = title;
         },
 
         createSettingsDialog() {
@@ -378,7 +386,8 @@ Ignore ts-mention tags when determining if the language of the text.`
 
         extractTs(item, { create = false } = {}) {
             if (!item) return null;
-            const dataTs = item.querySelector(CONSTANTS.SELECTORS.TIMESTAMP)?.getAttribute('data-ts');
+            const dataTs = item.querySelector(CONSTANTS.SELECTORS.TIMESTAMP)?.getAttribute('data-ts')
+                || item.querySelector(CONSTANTS.SELECTORS.TS_WRAPPER)?.getAttribute('data-message-ts');
             if (dataTs) return dataTs;
             if (item.id) return item.id;
             if (create) {
@@ -390,28 +399,31 @@ Ignore ts-mention tags when determining if the language of the text.`
             return item.dataset.aiTranslateKey || null;
         },
 
-        getOrCreateStatusLink(messageDisplay) {
-            const existing = messageDisplay.parentElement.querySelector(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
+        // the bar sits at the bottom of the message (after the blocks container, before
+        // reactions), mirroring where Slack's own translation bar renders
+        getOrCreateStatusBar(item, messageDisplay) {
+            const existing = item.querySelector(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
             if (existing) return existing;
-            const link = UI.createStatusLink();
-            messageDisplay.insertAdjacentElement('afterend', link);
-            return link;
+            const bar = UI.createStatusBar();
+            const anchor = item.querySelector(CONSTANTS.SELECTORS.MESSAGE_BLOCKS) ?? messageDisplay;
+            anchor.insertAdjacentElement('afterend', bar);
+            return bar;
         },
 
-        applyEntryToMessage(messageDisplay, entry) {
-            const link = this.getOrCreateStatusLink(messageDisplay);
+        applyEntryToMessage(item, messageDisplay, entry) {
+            const bar = this.getOrCreateStatusBar(item, messageDisplay);
             if (entry.showing === 'translated') {
                 if (messageDisplay.innerHTML !== entry.translated) messageDisplay.innerHTML = entry.translated;
-                link.textContent = 'see original';
+                UI.setStatus(bar, 'Translated.', 'See original');
             } else {
                 if (messageDisplay.innerHTML !== entry.original) messageDisplay.innerHTML = entry.original;
-                link.textContent = 'see translation';
+                UI.setStatus(bar, '', 'See translation');
             }
         },
 
-        toggleMessage(messageDisplay, entry) {
+        toggleMessage(item, messageDisplay, entry) {
             entry.showing = entry.showing === 'translated' ? 'original' : 'translated';
-            this.applyEntryToMessage(messageDisplay, entry);
+            this.applyEntryToMessage(item, messageDisplay, entry);
         },
 
         async translateMessage(item) {
@@ -423,7 +435,7 @@ Ignore ts-mention tags when determining if the language of the text.`
             const existing = TranslationStore.get(key);
             if (existing?.state === 'pending') return;
             if (existing?.state === 'done') {
-                this.toggleMessage(messageDisplay, existing);
+                this.toggleMessage(item, messageDisplay, existing);
                 return;
             }
 
@@ -441,36 +453,34 @@ Ignore ts-mention tags when determining if the language of the text.`
             };
             TranslationStore.set(key, entry);
 
-            const link = this.getOrCreateStatusLink(messageDisplay);
-            link.textContent = 'translating...';
-            link.title = '';
+            const bar = this.getOrCreateStatusBar(item, messageDisplay);
+            UI.setStatus(bar, 'Translating...', null);
 
             try {
                 const translated = await TranslationService.translate(entry.original);
                 entry.translated = translated;
                 entry.showing = 'translated';
                 entry.state = 'done';
-                if (messageDisplay.isConnected) this.applyEntryToMessage(messageDisplay, entry);
+                if (messageDisplay.isConnected) this.applyEntryToMessage(item, messageDisplay, entry);
             } catch (error) {
                 console.error('Translation error:', error);
                 entry.state = 'error';
                 entry.errorMessage = error.message;
                 if (messageDisplay.isConnected) {
-                    link.textContent = 'translation failed - click to retry';
-                    link.title = error.message;
+                    UI.setStatus(bar, 'Translation failed.', 'Retry', error.message);
                 }
                 if (error.authError) openSettings();
             }
         },
 
-        handleStatusLinkClick(link) {
-            const item = link.closest(CONSTANTS.SELECTORS.MESSAGE);
+        handleStatusBarClick(bar) {
+            const item = bar.closest(CONSTANTS.SELECTORS.MESSAGE);
             const messageDisplay = item?.querySelector(CONSTANTS.SELECTORS.MESSAGE_DISPLAY);
             if (!messageDisplay) return;
             const key = this.extractTs(item);
             const entry = TranslationStore.get(key);
             if (!entry) {
-                link.remove();
+                bar.remove();
                 return;
             }
             if (entry.state === 'pending') return;
@@ -479,7 +489,7 @@ Ignore ts-mention tags when determining if the language of the text.`
                 this.translateMessage(item);
                 return;
             }
-            this.toggleMessage(messageDisplay, entry);
+            this.toggleMessage(item, messageDisplay, entry);
         },
 
         // Slack's virtual list recycles DOM nodes on scroll; re-apply stored translations
@@ -496,16 +506,16 @@ Ignore ts-mention tags when determining if the language of the text.`
                 const entry = TranslationStore.get(key);
                 if (!entry || entry.state !== 'done') continue;
                 if (messageDisplay.innerHTML === entry.translated) {
-                    this.applyEntryToMessage(messageDisplay, entry);
+                    this.applyEntryToMessage(item, messageDisplay, entry);
                     continue;
                 }
                 if (messageDisplay.innerHTML !== entry.original) {
                     // message was edited since translation: never clobber the edit
                     TranslationStore.delete(key);
-                    messageDisplay.parentElement.querySelector(`.${CONSTANTS.CLASSES.STATUS_LINK}`)?.remove();
+                    item.querySelector(`.${CONSTANTS.CLASSES.STATUS_LINK}`)?.remove();
                     continue;
                 }
-                this.applyEntryToMessage(messageDisplay, entry);
+                this.applyEntryToMessage(item, messageDisplay, entry);
             }
         },
 
@@ -656,9 +666,9 @@ Ignore ts-mention tags when determining if the language of the text.`
 
     // Event Listeners
     document.body.addEventListener('click', async (event) => {
-        const statusLink = event.target.closest(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
-        if (statusLink) {
-            UIManager.handleStatusLinkClick(statusLink);
+        const statusBar = event.target.closest(`.${CONSTANTS.CLASSES.STATUS_LINK}`);
+        if (statusBar) {
+            UIManager.handleStatusBarClick(statusBar);
             return;
         }
 
