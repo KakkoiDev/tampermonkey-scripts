@@ -30,13 +30,17 @@ What it does:
 - **If a `greasyfork.json` manifest exists:** appends `{ file, name, blurb }` and regenerates the README table via `tools/gen-readme.mjs`. Absent those files, it skips both steps - the `.user.js` and dev loader still work, so this runs in any repo.
 - Prints the **dev-loader block** to paste into Tampermonkey.
 
-## 2. Test with the dev loader
+## 2. Hand the dev loader to the user FIRST
 
-The scaffolder prints a dev loader - a tiny Tampermonkey script that `@require`s the file from disk so edits live-reload. The **loaded file's own header is ignored at runtime**; the loader is what Tampermonkey reads. The scaffolder already copies every `@match`, `@grant`, `@connect`, and external `@require` onto the loader (CDN `@require`s before the `file://` line). Paste it into a new Tampermonkey script; if you later change the real script's `@match`/`@grant`/`@connect`/`@require`, update the loader to match.
+**Give the user the filled-in dev-loader block the moment the file exists (right after scaffold) and again the moment the feature is written - BEFORE you run any of your own tests.** The user tests with live reload while you keep working; the sooner they have the loader, the sooner real feedback arrives. Their live test is the one that counts, and on auth-gated sites (Slack, Gmail, Notion, ...) it is the *only* test that can reach the logged-in DOM at all - your headless tools are logged out there. Never make the user ask for the loader.
 
-## 3. Build the feature
+The scaffolder prints a dev loader - a tiny Tampermonkey script that `@require`s the file from disk so edits live-reload. The **loaded file's own header is ignored at runtime**; the loader is what Tampermonkey reads. The scaffolder already copies every `@match`, `@grant`, `@connect`, and external `@require` onto the loader (CDN `@require`s before the `file://` line). It does **NOT** emit `@run-at` - if the feature needs one (e.g. `document-start`), add it to both the real file and the loader by hand. If you later change any `@match`/`@grant`/`@connect`/`@require`/`@run-at`, mirror it onto the loader or it won't take effect.
 
-The scaffolded body is a stub (`// TODO`). Now write the actual feature. Rules that save you:
+## 3. Build the feature, then re-deliver the loader
+
+The scaffolded body is a stub (`// TODO`). Now write the actual feature. When it's written, re-post the dev loader (§2) so the user tests the real thing right away. Rules that save you:
+
+- **Deliver before you self-test; your headless tests verify logic, not the live site.** Rendering the user's pasted/mock DOM in Puppeteer and injecting the script checks selectors, state, and toggling against a *static copy* - it does **not** prove placement, appearance, or native-CSS/runtime interaction on the real site, and must never be reported as if it did. It does not replace the user's dev-loader test. Hand off the loader first; run your own tests after, if at all, and label them as "logic against the pasted DOM", not "verified on <site>".
 
 - **Placing UI on obfuscated sites (Google, Slack, Notion, ...):** don't guess hashed class names. Get the target element's `outerHTML` from the user, or render the page headless and inspect it, before deciding where to inject. Anchor on stable attributes (`aria-label`, `name`, `role`, `data-qa`), never hashed classes. Position injected UI `absolute`/`fixed` against the anchor's rect so it doesn't reflow the page.
 - **Debugging on a logged-in site you can't see:** don't patch placement blind twice. Add a temporary `console.log` behind a `const DEBUG = true;` block in the real file, have the user reload and paste the output, then strip it before committing. In-file logs see the actual code path and runtime state (hover-only UI, hidden chars, which branch ran) that static HTML won't reveal.
