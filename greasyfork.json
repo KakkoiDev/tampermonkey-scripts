@@ -96,7 +96,8 @@
       "file": "scripts/slack-dm-blur.user.js",
       "visibility": "unlisted",
       "name": "Slack DM Blur",
-      "blurb": "Toggle in the Direct Messages header that blurs your DM feed and peek-card list so viewers can't read them while screensharing"
+      "blurb": "Toggle in the Direct Messages header that blurs your DM feed and peek-card list so viewers can't read them while screensharing",
+      "id": "586448"
     },
     {
       "file": "scripts/refined-github-preview-debanner.user.js",
