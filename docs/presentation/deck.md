@@ -67,7 +67,7 @@ A userscript runs **as you**, on your logged-in session.
 - Some scripts send data out - e.g. AI Translate posts message text to an AI API.
 - AI-generated code is not automatically safe. Read it before you trust it.
 
-Rule of thumb: keep to your own scripts, and prefer a **local** AI model for anything sensitive.
+Rule of thumb: read a script before you run it. If it sends data out (like AI Translate does), use a **local** model for sensitive text.
 
 ---
 
@@ -94,7 +94,7 @@ Build one, live:
 
 # Try it
 
-Everything is here, with one-click installs:
+Everything is here, ready to install:
 
 `github.com/KakkoiDev/tampermonkey-scripts`
 
