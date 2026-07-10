@@ -27,6 +27,7 @@ Small userscripts that bolt new features onto sites you already use - Google, Gi
 | [GitHub PR Copy Title + Link](scripts/github-pr-copy-title-link.user.js) | Adds a button by the PR title that copies the title + PR link, ready to paste as a link in Slack, Notion, or markdown | `github.com` | [Greasy Fork](https://greasyfork.org/en/scripts/582750) |
 | [Virtual Media Injector](scripts/virtual-media-injector.user.js) | Floating button that plays a pre-recorded video into your webcam and mic during a meeting, with live toggle back to your real camera | `*` | [Greasy Fork](https://greasyfork.org/en/scripts/583097) (unlisted - direct link) |
 | [Gmeet Standup Roster](scripts/gmeet-standup-roster.user.js) | Marks who has talked in Google Meet's People panel - auto-detected from the audio indicator, with a manual toggle, for tracking daily standups | `meet.google.com` | [Greasy Fork](https://greasyfork.org/en/scripts/584250) |
+| [Slack DM Blur](scripts/slack-dm-blur.user.js) | Toggle in the Direct Messages header that blurs your DM feed and peek-card list so viewers can't read them while screensharing | `app.slack.com` | not yet published |
 <!-- scripts:end -->
 
 **Just want to use one?** Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension, click the Greasy Fork link for any script above, and hit *Install*. That's the whole thing - no coding required.
