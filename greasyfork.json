@@ -100,6 +100,7 @@
     },
     {
       "file": "scripts/refined-github-preview-debanner.user.js",
+      "id": "586441",
       "visibility": "unlisted",
       "name": "Refined GitHub Preview Debanner",
       "blurb": "Remove the Refined GitHub HTML Preview warning banner on page load"
