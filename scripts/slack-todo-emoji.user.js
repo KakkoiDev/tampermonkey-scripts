@@ -2,7 +2,7 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.06.18.2
+// @version      2026.07.13.1
 // @description  Todo checkboxes in the Slack composer: type "[] " to add one, click to cycle status, Tab indents, Enter continues the list
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
@@ -314,9 +314,11 @@
         }
         if (isTodoLine(p)) {                               // box is the first child: replace it, keep a separator after it
             const bare = isEmptyTodo(p);
-            selectNode(firstEmoji(p));
+            const box = firstEmoji(p);
+            const html = box.outerHTML;                    // capture before insertText destroys the node
+            selectNode(box);
             document.execCommand('insertText', false, INDENT);
-            document.execCommand('insertHTML', false, emojiHTML(BOX) + (bare ? ' ' : ''));
+            document.execCommand('insertHTML', false, html + (bare ? ' ' : ''));
             setCaretTail(p, tail);
             return;
         }
