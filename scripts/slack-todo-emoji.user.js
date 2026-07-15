@@ -2,8 +2,8 @@
 // @name         Slack Todo Emoji
 // @namespace    http://tampermonkey.net/
 // @icon         https://app.slack.com/favicon.ico
-// @version      2026.07.13.1
-// @description  Todo checkboxes in the Slack composer: type "[] " to add one, click to cycle status, Tab indents, Enter continues the list
+// @version      2026.07.15.2
+// @description  Todo checkboxes in the Slack composer: type "[] " to add one, click to cycle status, Tab indents, Enter continues the list, Enter on an empty box leaves it
 // @author       KakkoiDev
 // @match        https://app.slack.com/*
 // @grant        none
@@ -42,7 +42,6 @@
     const STAR = { code: ':sparkles:', cp: '2728', alt: 'sparkles emoji' }; // importance flag, orthogonal to status
     const byCode = new Map(CYCLE.map((e) => [e.code, e]));
 
-    const EXIT_ON_EMPTY = false; // when true, Enter on an empty checkbox ends the list instead of adding another
     let muting = false;         // ignore our own edits in the line observer
 
     // handleNewLine continues the list only for a real user newline. Slack rebuilds the editor's <p>s
@@ -52,10 +51,24 @@
     // is a newline, so it's allowed) and let handleNewLine act only within a short grace window after one.
     const NEWLINE_GRACE_MS = 250;
     let lastNewlineKey = 0;
+    let lastNewlineTodo = false; // was the Enter pressed on a todo line? gates handleNewLine's continuation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && e.target.closest && e.target.closest(EDITOR)) {
-            lastNewlineKey = performance.now();
+        if (e.key !== 'Enter' || e.metaKey || e.ctrlKey) return;
+        const editor = e.target.closest && e.target.closest(EDITOR);
+        if (!editor) return;
+        const p = currentLine(editor);
+        // second Enter on an empty checkbox: strip it and leave the list (like Slack's own lists).
+        // plain Enter only; not while composing (IME) or a Slack autocomplete popup is open.
+        if (!e.shiftKey && !e.altKey && !e.isComposing
+            && !document.querySelector('[data-qa*="suggestion"], [data-qa*="autocomplete"]')
+            && p && isEmptyTodo(p)) {
+            e.preventDefault();
+            e.stopPropagation(); // capture-phase stop: Quill's root keydown never sees it, so no newline
+            exitList(p);
+            return;              // do not refresh the grace window, so handleNewLine stays inert
         }
+        lastNewlineKey = performance.now();
+        lastNewlineTodo = !!(p && isTodoLine(p)); // continue the list only when Enter was pressed on a todo line
     }, true);
 
     // The cyclable checkboxes look clickable (pointer cursor).
@@ -163,6 +176,36 @@
             document.execCommand('insertHTML', false, emojiHTML(entry) + emojiHTML(STAR));
         }
         setCaretTail(p, tail);
+    }
+
+    // Enter on an empty checkbox line: remove the box (and any indent) and leave the list, landing
+    // on a clean empty line. Single-node deletes only (the header warns Quill ignores multi-node
+    // ranges): drop the emoji blot first, then the leftover whitespace text.
+    function exitList(p) {
+        muting = true;
+        try {
+            const box = firstEmoji(p);
+            if (box) {
+                selectNode(box);                      // single node: Quill drops the blot and its U+FEFF anchors
+                document.execCommand('delete');
+            }
+            if ((p.textContent || '').replace(IGNORE, '') === '' && p.childNodes.length) {
+                const sel = window.getSelection();
+                const r = document.createRange();     // only whitespace text nodes remain now
+                r.selectNodeContents(p);
+                sel.removeAllRanges();
+                sel.addRange(r);
+                document.execCommand('delete');
+            }
+            const sel = window.getSelection();         // deterministic caret at the start of the now-empty line
+            const r = document.createRange();
+            r.setStart(p, 0);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+        } finally {
+            muting = false;
+        }
     }
 
     // The <p> line holding the caret, if it sits inside the given editor.
@@ -329,6 +372,7 @@
     function handleNewLine(newP) {
         if (muting) return;
         if (performance.now() - lastNewlineKey > NEWLINE_GRACE_MS) return; // no recent user Enter: this <p> came from Slack rebuilding the editor (edit-open / save), not a newline
+        if (!lastNewlineTodo) return; // Enter landed on a non-todo line (e.g. the empty line left after exiting); don't reinsert a box
         const prev = newP.previousElementSibling;
         if (!prev || prev.tagName !== 'P' || !isTodoLine(prev)) return;
         // only a clean "Enter at end of item" - the new line is still empty
@@ -338,14 +382,6 @@
         setTimeout(() => {
             try {
                 const sel = window.getSelection();
-                if (EXIT_ON_EMPTY && isEmptyTodo(prev)) {
-                    const r = document.createRange();   // empty checkbox + Enter -> end the list
-                    r.selectNodeContents(prev);
-                    sel.removeAllRanges();
-                    sel.addRange(r);
-                    document.execCommand('delete');
-                    return;
-                }
                 const r = document.createRange();       // continue: indent + a fresh checkbox on the new line
                 r.setStart(newP, 0);
                 r.collapse(true);
