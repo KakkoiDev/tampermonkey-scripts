@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmeet++
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.21.2
+// @version      2026.07.21.3
 // @license      MIT
 // @description  Add nice-to-have features to Gmeet meetings
 // @author       KakkoiDev
@@ -38,7 +38,7 @@
 (function () {
     'use strict';
 
-    const DEBUG = true;
+    const DEBUG = false;
     const GMPP_TOKEN = 'gmpp-bridge-1'; // namespaces our postMessages; origin checks are the real guard
     const MEET_ORIGIN = 'https://meet.google.com';
     const CHAT_ORIGIN = 'https://chat.google.com';
