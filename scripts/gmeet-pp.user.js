@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmeet++
 // @namespace    http://tampermonkey.net/
-// @version      2026.07.21.1
+// @version      2026.07.21.2
 // @license      MIT
 // @description  Add nice-to-have features to Gmeet meetings
 // @author       KakkoiDev
@@ -38,7 +38,7 @@
 (function () {
     'use strict';
 
-    const DEBUG = false;
+    const DEBUG = true;
     const GMPP_TOKEN = 'gmpp-bridge-1'; // namespaces our postMessages; origin checks are the real guard
     const MEET_ORIGIN = 'https://meet.google.com';
     const CHAT_ORIGIN = 'https://chat.google.com';
@@ -168,6 +168,15 @@
 
     const qs = (sel) => document.querySelector(sel);
 
+    // DEBUG tracing. The in-frame agent posts {type:'diag'} to us, so both sides' events
+    // surface in the ONE Meet-tab console. Temporary - flip DEBUG off before shipping.
+    function diag(...a) { if (DEBUG) console.log('[Gmeet++]', ...a); }
+    if (DEBUG) window.addEventListener('message', (e) => {
+        if (e.origin !== CHAT_ORIGIN) return;
+        const d = e.data;
+        if (d && d.gmpp === GMPP_TOKEN && d.type === 'diag') console.log('[Gmeet++ frame]', d.msg);
+    });
+
     function lowestCommonAncestor(a, b) {
         const ancestors = new Set();
         for (let n = a; n; n = n.parentElement) ancestors.add(n);
@@ -229,28 +238,16 @@
         return false;
     }
 
-    function waitForChatIframe(timeoutMs) {
-        return new Promise((resolve) => {
-            const existing = qs(SEL.chatIframe);
-            if (existing) { resolve(existing); return; }
-            const start = Date.now();
-            const poll = setInterval(() => {
-                const el = qs(SEL.chatIframe);
-                if (el || Date.now() - start > timeoutMs) {
-                    clearInterval(poll);
-                    resolve(el || null);
-                }
-            }, 100);
-        });
-    }
-
-    // Hand the message to the in-frame agent over postMessage. The chat iframe (and our
-    // agent inside it, and the composer) can take several seconds to load, so retry the
-    // post until it acks. Retries share one id; the agent dedups on it, so no duplicate
-    // sends. Clipboard-fallback on a failed ack or overall timeout.
-    function bridgeSend(iframe, message) {
+    // Post the message to the in-frame agent, retrying until it acks. The `post` closure
+    // RE-QUERIES the iframe every tick, so a chat panel that is still opening (cold start:
+    // the iframe element and the chat.google.com app appear several seconds after the toggle
+    // click) is picked up as soon as it exists - no premature bail-out. Retries share one id;
+    // the agent dedups on it, so no duplicate sends. Clipboard-fallback on a failed ack or
+    // the overall timeout.
+    function bridgeSend(message) {
         const id = String(Date.now()) + '-' + Math.random().toString(36).slice(2);
         let done = false;
+        diag('bridgeSend start id=' + id.slice(-4));
         const finish = (fn) => {
             if (done) return;
             done = true;
@@ -263,17 +260,25 @@
             if (e.origin !== CHAT_ORIGIN) return;
             const d = e.data;
             if (!d || d.gmpp !== GMPP_TOKEN || d.type !== 'send-ack' || d.id !== id) return;
-            if (DEBUG) console.log('[Gmeet++] bridge ack', d.ok);
-            finish(d.ok ? null : () => fallbackClipboard(message));
+            diag('bridge ack ok=' + d.ok + ' manual=' + d.manual);
+            if (!d.ok) finish(() => fallbackClipboard(message));
+            else if (d.manual) finish(() => toast('Message typed in chat - press Enter to send.'));
+            else finish(null);
         };
         window.addEventListener('message', onAck);
-        const post = () => iframe.contentWindow?.postMessage({ gmpp: GMPP_TOKEN, type: 'send', id, text: message }, CHAT_ORIGIN);
+        let posts = 0, foundLogged = false;
+        const post = () => {
+            posts++;
+            const iframe = qs(SEL.chatIframe);
+            if (iframe && !foundLogged) { foundLogged = true; diag('iframe found after ~' + (posts * 250) + 'ms, contentWindow=' + !!iframe.contentWindow); }
+            iframe?.contentWindow?.postMessage({ gmpp: GMPP_TOKEN, type: 'send', id, text: message }, CHAT_ORIGIN);
+        };
         post();
-        const poll = setInterval(post, 250); // retry until the in-frame agent loads and acks
+        const poll = setInterval(post, 250); // re-find the iframe + re-post until the agent acks
         const timer = setTimeout(() => finish(() => {
-            if (DEBUG) console.log('[Gmeet++] bridge timed out -> clipboard');
+            diag('bridge TIMEOUT 20s (iframeEverFound=' + foundLogged + ') -> clipboard');
             fallbackClipboard(message);
-        }), 12000);
+        }), 20000); // generous: cold chat open + app load + agent inject can take many seconds
     }
 
     function fallbackClipboard(message) {
@@ -285,15 +290,14 @@
     }
 
     function postToChat(message) {
-        if (tryNativeSend(message)) return;
-        // Ensure chat is open so the iframe exists, then bridge into it.
+        if (tryNativeSend(message)) { diag('native send used'); return; }
+        // Open chat so the iframe gets created; bridgeSend re-queries it, so it tolerates the
+        // panel still opening (the cold-start case).
         const chatToggle = qs(SEL.chatToggle);
         const open = chatToggle && (chatToggle.getAttribute('aria-expanded') ?? chatToggle.getAttribute('aria-pressed'));
+        diag('postToChat cold=' + (open === 'false') + ' toggleFound=' + !!chatToggle + ' openAttr=' + open);
         if (chatToggle && open === 'false') chatToggle.click();
-        waitForChatIframe(2500).then((iframe) => {
-            if (iframe && iframe.contentWindow) bridgeSend(iframe, message);
-            else fallbackClipboard(message);
-        });
+        bridgeSend(message);
     }
 
     // ---------------------------------------------------------------- participants
@@ -517,18 +521,27 @@
     // ---------------------------------------------------------------- in-frame chat agent
     // Runs ONLY inside the chat.google.com iframe (hoisted; called from the hostname branch).
 
+    // DEBUG: report the agent's own events up to the Meet page so they land in one console.
+    function frameDiag(msg) {
+        if (!DEBUG) return;
+        try { window.parent.postMessage({ gmpp: GMPP_TOKEN, type: 'diag', msg }, MEET_ORIGIN); } catch (e) { /* ignore */ }
+        console.log('[Gmeet++ frame]', msg);
+    }
+
     function initChatFrameAgent() {
         window.addEventListener('message', (e) => {
             if (e.origin !== MEET_ORIGIN) return;
             const d = e.data;
             if (!d || d.gmpp !== GMPP_TOKEN || d.type !== 'send') return;
+            frameDiag('recv send id=' + (d.id || '').slice(-4) + (handledSends.has(d.id) ? ' (dup, skip)' : ''));
             if (d.id && handledSends.has(d.id)) return; // dedup retried posts -> send once
             if (d.id) handledSends.add(d.id);
-            trySendInFrame(d.text).then((ok) => {
-                try { e.source?.postMessage({ gmpp: GMPP_TOKEN, type: 'send-ack', id: d.id, ok }, e.origin); } catch (err) { /* ignore */ }
+            trySendInFrame(d.text).then((status) => {
+                frameDiag('ack ' + status + ' id=' + (d.id || '').slice(-4));
+                try { e.source?.postMessage({ gmpp: GMPP_TOKEN, type: 'send-ack', id: d.id, ok: status !== 'failed', manual: status === 'manual' }, e.origin); } catch (err) { /* ignore */ }
             });
         });
-        if (DEBUG) console.log('[Gmeet++] chat-frame agent ready');
+        frameDiag('agent ready @ ' + location.href.slice(0, 55));
     }
 
     // Wait for the composer to exist (Chat renders it async after the frame loads), then
@@ -538,39 +551,65 @@
             const start = Date.now();
             const attempt = () => {
                 const box = document.querySelector('[contenteditable="true"][role="textbox"]');
-                if (box) { resolve(insertAndSend(box, text)); return; }
-                if (Date.now() - start > 8000) { if (DEBUG) console.log('[Gmeet++] frame: composer never appeared'); resolve(false); return; }
+                if (box) { frameDiag('composer found @' + (Date.now() - start) + 'ms'); insertAndSend(box, text).then(resolve); return; }
+                if (Date.now() - start > 8000) { frameDiag('composer NEVER appeared (8s)'); resolve('failed'); return; }
                 setTimeout(attempt, 150);
             };
             attempt();
         });
     }
 
+    // Put `text` into Chat's composer and send. Resolves:
+    //   'sent'   - clicked the enabled Send button
+    //   'manual' - text is in the box but Send never enabled; caller tells the user to press
+    //              Enter (Chat ignores untrusted synthetic Enter, so we never fake it)
+    //   'failed' - text never landed at all
+    // Verified against the real Chat editor (Lexical): execCommand insertText AND a simulated
+    // paste both register in its model and ENABLE the Send button - but only once the editor
+    // is initialised. On a cold composer (embed just booted) the first insert can run too
+    // early and not register, so Send never enables. Fix: RE-INSERT (clear first) every ~1.2s
+    // until Send enables, then click. Grounded in the fact that the insert works once ready.
     function insertAndSend(box, text) {
-        box.focus();
-        try { document.execCommand('insertText', false, text); } catch (err) { /* ignore */ }
-        if (!box.textContent || !box.textContent.trim()) {
-            try {
-                box.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: text, bubbles: true, cancelable: true }));
-                box.textContent = text;
-                box.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: text, bubbles: true }));
-            } catch (err) { /* ignore */ }
-        }
-        if (!box.textContent || !box.textContent.trim()) { if (DEBUG) console.log('[Gmeet++] frame: text did not land'); return false; }
+        return new Promise((resolve) => {
+            const sendBtn = () => document.querySelector('button[jsname="GBTyxb"]');
+            const focusEnd = () => {
+                try {
+                    box.focus();
+                    const r = document.createRange(); r.selectNodeContents(box); r.collapse(false);
+                    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+                } catch (err) { /* ignore */ }
+            };
+            const clearBox = () => { try { box.focus(); document.execCommand('selectAll', false, null); document.execCommand('delete', false, null); } catch (err) { /* ignore */ } };
+            const doInsert = () => {
+                focusEnd();
+                try { document.execCommand('insertText', false, text); } catch (err) { /* ignore */ }
+                if (!box.textContent || !box.textContent.trim()) {
+                    try { const dt = new DataTransfer(); dt.setData('text/plain', text); box.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); } catch (err) { /* ignore */ }
+                }
+                return !!(box.textContent || '').trim();
+            };
 
-        // Let Chat's framework enable the send button, then send (button first, Enter fallback).
-        setTimeout(() => {
-            const sendBtn = document.querySelector('button[jsname="GBTyxb"]');
-            if (sendBtn && !sendBtn.disabled) {
-                sendBtn.click();
-                if (DEBUG) console.log('[Gmeet++] frame: clicked send');
-            } else {
-                const opts = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true };
-                box.dispatchEvent(new KeyboardEvent('keydown', opts));
-                box.dispatchEvent(new KeyboardEvent('keyup', opts));
-                if (DEBUG) console.log('[Gmeet++] frame: dispatched Enter (send btn disabled=' + (sendBtn ? sendBtn.disabled : 'absent') + ')');
-            }
-        }, 120);
-        return true;
+            let attempts = 1;
+            frameDiag('insert attempt 1 landed=' + doInsert());
+            let lastInsert = Date.now();
+            const deadline = Date.now() + 5000;
+            const tick = () => {
+                const b = sendBtn();
+                if (b && !b.disabled) { b.click(); frameDiag('clicked send button (attempt ' + attempts + ')'); resolve('sent'); return; }
+                // Send still disabled: if a beat has passed the editor didn't register our text
+                // (cold) - clear and re-insert.
+                if (Date.now() - lastInsert > 1200 && attempts < 4) {
+                    clearBox();
+                    attempts++;
+                    frameDiag('re-insert attempt ' + attempts + ' landed=' + doInsert());
+                    lastInsert = Date.now();
+                }
+                if (Date.now() < deadline) { setTimeout(tick, 250); return; }
+                const landed = !!(box.textContent || '').trim();
+                frameDiag('send never enabled in 5s -> ' + (landed ? 'manual' : 'failed'));
+                resolve(landed ? 'manual' : 'failed');
+            };
+            setTimeout(tick, 250);
+        });
     }
 })();
