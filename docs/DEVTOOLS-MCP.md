@@ -14,28 +14,43 @@ read console (incl. cross-frame), screenshot, click - collapsing the loop to one
 **Worth it for:** the auth-gated / hashed-DOM scripts. Overkill for simple public pages.
 Only relevant when a live-site bug needs eyes the human would otherwise paste by hand.
 
-## What's done
+## What's done (tested)
 
-Registered (user scope, all projects), via the confirmed-working `npm exec` form
-(`npx` is aliased to `npm run` in this shell and mis-parses):
+Registered (user scope, all projects), attaching to a dedicated debug-port Chrome via
+`--browserUrl`. The `npm exec` form is used because `npx` is aliased to `npm run` in this
+shell and mis-parses:
 
 ```
-claude mcp add chrome-devtools --scope user -- npm exec -y -- chrome-devtools-mcp@latest --autoConnect
+claude mcp add chrome-devtools --scope user -- npm exec -y -- chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222
 ```
 
-`--autoConnect` (Chrome 144+; this machine is 150) attaches to the **real stable-channel
-Chrome profile** - i.e. the human's logged-in Google/Meet session - instead of a fresh
-dedicated profile. Rollback: `claude mcp remove chrome-devtools -s user`.
+Rollback: `claude mcp remove chrome-devtools -s user`.
 
-## Remaining one-time steps (human)
+**What did NOT work:** `--autoConnect` (meant to attach to the real logged-in profile via
+`chrome://inspect/#remote-debugging`). On Chrome 150 it failed with "Could not find
+DevToolsActivePort" - the toggle's server on `:9222` does not serve the classic CDP HTTP
+endpoints (`/json/version`, `/json/list` all 404), so neither `--autoConnect` nor
+`--browserUrl` can talk to it. The dedicated-port method below is what actually attached.
 
-1. In Chrome, open `chrome://inspect/#remote-debugging` and **start/enable the remote
-   debugging server**. `--autoConnect` needs this toggle; without it the MCP server runs
-   but never attaches to a tab. Leave Chrome running.
-2. **Restart Claude Code** (quit + relaunch). MCP tools load at session start, so the
-   `chrome-devtools` tools are not available in the session that registered the server.
-3. Verify next session: `claude mcp get chrome-devtools` shows Connected, and the agent
-   can call a list-pages / navigate tool.
+## Setup (human, one-time)
+
+1. Launch a **dedicated** Chrome with remote debugging - Chrome refuses
+   `--remote-debugging-port` on the default profile, so a separate `--user-data-dir` is
+   required:
+   ```
+   open -na "Google Chrome" --args --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp-profile" --use-fake-device-for-media-stream --use-fake-ui-for-media-stream
+   ```
+   The fake-device flags matter for Meet: with **no** mic/cam in the profile the mute
+   toggles are no-ops (`data-is-muted` never changes, verified), so auto-mute can't be
+   exercised. Granting real mic/cam in the profile works too.
+2. Sign into Google in that window once (fresh profile; persists at `~/.chrome-cdp-profile`).
+3. **Restart Claude Code** with that Chrome already running - the `--browserUrl` server
+   attaches at session start. Verify: `claude mcp get chrome-devtools` Connected, then
+   `list_pages` returns the tab.
+
+The dedicated profile has no Tampermonkey, so the agent **injects the userscript over CDP**
+(`navigate_page` initScript / `evaluate_script`) rather than relying on a dev loader.
+Install Tampermonkey in the profile once if you prefer the real dev-loader path.
 
 ## Usage loop (once tools are live)
 
@@ -62,9 +77,9 @@ dedicated profile. Rollback: `claude mcp remove chrome-devtools -s user`.
 
 ## Caveats
 
-- **Security:** autoConnect drives the human's actual logged-in Chrome - the agent can act
-  on any open tab (mail, etc.). Keep only the tab under test open during a debug session, or
-  accept the exposure knowingly. This is why it's not on by default in normal work.
+- **Security:** the debug port gives the agent full control of that Chrome instance. The
+  dedicated profile limits exposure to whatever you sign into there - keep it separate from
+  your main browsing, and only sign into the account you're testing with.
 - **Fragility:** Google DOM churn, OOPIF, automation detection. Keep anchoring on stable
   attributes (`jsname`, `data-*`, `role`).
 - **Not a human-repro replacement** per the Fix Protocol - it's a faster second confirmation.

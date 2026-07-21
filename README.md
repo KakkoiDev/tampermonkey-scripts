@@ -81,22 +81,30 @@ Edit the `.user.js` file -> reload the page -> your change is live. That's it.
 
 Debugging a script on a logged-in, hashed-DOM site (Meet, Slack, Notion) usually means reloading the page and pasting console output back to your AI. [Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp) lets the agent drive your real Chrome instead - reload the page, read the live DOM, read the console (including inside cross-origin iframes), and screenshot - so it finds the bug itself.
 
-Set up once (needs [Node](https://nodejs.org/) and Chrome 144+):
+Set up once (needs [Node](https://nodejs.org/) and Chrome):
 
 1. Register the server with your agent (Claude Code shown):
 
    ```sh
-   claude mcp add chrome-devtools --scope user -- npm exec -y -- chrome-devtools-mcp@latest --autoConnect
+   claude mcp add chrome-devtools --scope user -- npm exec -y -- chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222
    ```
 
-   `--autoConnect` attaches to your **normal, logged-in** Chrome profile (so auth-gated sites just work). Use `npm exec` as shown if `npx` misbehaves on your machine.
+   Use `npm exec` as shown if `npx` misbehaves on your machine.
 
-2. In Chrome, open `chrome://inspect/#remote-debugging` and turn the remote debugging server **on**. Leave Chrome running.
-3. Restart your agent so the new tools load.
+2. Launch a **dedicated** Chrome with remote debugging on that port (Chrome refuses the port on your default profile):
+
+   ```sh
+   open -na "Google Chrome" --args --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp-profile"
+   ```
+
+   For meetings, also pass `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream` (or grant mic/cam once) so device-dependent controls actually toggle.
+
+3. Sign into Google in that window - the profile is fresh, so just once; it persists and is reused.
+4. Restart your agent so it attaches (Chrome must already be running on the port).
 
 Then just ask it, e.g. *"reload the Meet tab and read `data-is-muted` on the mic button."* No more copy-paste loop.
 
-Heads-up: this drives your **actual** logged-in Chrome, so the agent can act on any open tab - keep only the tab you're debugging open, and remove the server when done with `claude mcp remove chrome-devtools -s user`. Full setup, the dedicated-profile fallback, and caveats: **[DEVTOOLS-MCP.md](docs/DEVTOOLS-MCP.md)**.
+Notes: the dedicated profile has no Tampermonkey, so the agent injects the script over CDP (or install Tampermonkey there once). The newer `--autoConnect` (attach to your normal profile via `chrome://inspect`) did **not** attach on Chrome 150 in testing - the dedicated-port method above is what works. Remove the server when done: `claude mcp remove chrome-devtools -s user`. Full setup + caveats: **[DEVTOOLS-MCP.md](docs/DEVTOOLS-MCP.md)**.
 
 ## More
 
