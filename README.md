@@ -14,7 +14,7 @@ Small userscripts that bolt new features onto sites you already use - Google, Gi
 <!-- scripts:start -->
 | Script | What it does | Runs on | Install |
 |---|---|---|---|
-| [Gmeet++](scripts/gmeet-pp.user.js) | Auto-mute mic & cam on join, invert-colors button, random participant picker, and more for Google Meet | `meet.google.com` | [Greasy Fork](https://greasyfork.org/en/scripts/513815) |
+| [Gmeet++](scripts/gmeet-pp.user.js) | Auto-mute mic & cam on join, invert-colors button, random participant picker, and more for Google Meet | `meet.google.com`, `chat.google.com/embed` | [Greasy Fork](https://greasyfork.org/en/scripts/513815) |
 | [GitHub PR Load All Comments](scripts/github-pr-load-all-comments.user.js) | Adds a "Load all!" button that expands every hidden conversation in a GitHub PR | `github.com` | [Greasy Fork](https://greasyfork.org/en/scripts/564954) |
 | [GitHub PR Copy Diff](scripts/github-pr-copy-diff.user.js) | Adds a "Copy Diff" button to the PR nav that copies the unified diff to the clipboard | `github.com` | [Greasy Fork](https://greasyfork.org/en/scripts/581098) |
 | [Langfinity Loby Defaults](scripts/langfinity-loby-defaults.user.js) | Turns off mic & camera in the Langfinity lobby and remembers your last-used name | `langfinity.ai/meeting` | [Greasy Fork](https://greasyfork.org/en/scripts/557742) |
@@ -77,8 +77,30 @@ Edit the `.user.js` file -> reload the page -> your change is live. That's it.
 
 > New here? [`scripts/google-emoji-blast.user.js`](scripts/google-emoji-blast.user.js) (the emoji button in the GIF above) is the simplest one to copy from: `@grant none`, about 40 lines.
 
+## Debug with an AI agent (optional)
+
+Debugging a script on a logged-in, hashed-DOM site (Meet, Slack, Notion) usually means reloading the page and pasting console output back to your AI. [Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp) lets the agent drive your real Chrome instead - reload the page, read the live DOM, read the console (including inside cross-origin iframes), and screenshot - so it finds the bug itself.
+
+Set up once (needs [Node](https://nodejs.org/) and Chrome 144+):
+
+1. Register the server with your agent (Claude Code shown):
+
+   ```sh
+   claude mcp add chrome-devtools --scope user -- npm exec -y -- chrome-devtools-mcp@latest --autoConnect
+   ```
+
+   `--autoConnect` attaches to your **normal, logged-in** Chrome profile (so auth-gated sites just work). Use `npm exec` as shown if `npx` misbehaves on your machine.
+
+2. In Chrome, open `chrome://inspect/#remote-debugging` and turn the remote debugging server **on**. Leave Chrome running.
+3. Restart your agent so the new tools load.
+
+Then just ask it, e.g. *"reload the Meet tab and read `data-is-muted` on the mic button."* No more copy-paste loop.
+
+Heads-up: this drives your **actual** logged-in Chrome, so the agent can act on any open tab - keep only the tab you're debugging open, and remove the server when done with `claude mcp remove chrome-devtools -s user`. Full setup, the dedicated-profile fallback, and caveats: **[DEVTOOLS-MCP.md](docs/DEVTOOLS-MCP.md)**.
+
 ## More
 
 - **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - full local-dev guide, troubleshooting, and site-specific notes.
 - **[PUBLISHING.md](docs/PUBLISHING.md)** - publishing to Greasy Fork and using this repo as a template.
+- **[DEVTOOLS-MCP.md](docs/DEVTOOLS-MCP.md)** - drive your logged-in Chrome from an AI agent to debug scripts on auth-gated sites.
 - **[IDEAS.md](docs/IDEAS.md)** - the backlog.
