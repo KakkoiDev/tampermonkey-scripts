@@ -2,7 +2,7 @@
 // @name         Notion Comment Recovery
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.notion.so/front-static/favicon.ico
-// @version      2026.07.23.3
+// @version      2026.07.23.4
 // @description  Shows every comment Notion still stores for the current page - open, resolved, and comments whose block or anchor was deleted - in one floating panel, with export. Deep-scans version history to recover deleted-block comments retroactively.
 // @author       KakkoiDev
 // @match        https://www.notion.so/*
@@ -148,6 +148,14 @@
     const cleanText = (t) => (t || '').replace(/^\s*‣\s*/, '').trim();
     const blockTitle = (b) => (b && b.properties && b.properties.title) ? rich(b.properties.title) : '';
     const fmtTs = (ms) => { try { return ms ? new Date(ms).toLocaleString() : ''; } catch (e) { return ''; } };
+    // Notion keeps trashed content for a retention window that depends on the workspace plan
+    // (version history ~7/30/90 days or unlimited). We can't read the plan, so assume 30 and label it
+    // an estimate. moved_to_trash_time is the real start of the clock.
+    const RETENTION_DAYS = 30;
+    function daysLeft(trashedTime) {
+        if (!trashedTime) return null;
+        return RETENTION_DAYS - Math.floor((Date.now() - trashedTime) / 86400000);
+    }
 
     // ───────────────────────── fetch + categorize a set of discussion ids ─────────────────────────
     // Upserts into `threads` (keyed by discussion id) - safe to call repeatedly (fast scan, then deep scan).
@@ -219,6 +227,7 @@
                 status,
                 anchorText: d.context || '',
                 blockTitle: pb ? (blockTitle(pb) || '(untitled block)') : (d.src === 'cache' ? '(comment deleted)' : '(deleted block)'),
+                trashedTime: (pb && pb.moved_to_trash_time) || null, // when the block was trashed, for the purge countdown
                 comments: thread,
             });
         }
@@ -505,6 +514,13 @@
         const head = document.createElement('div'); head.className = 'noc-meta';
         const sm = STATUS_META[t.status] || { label: t.status, cls: 's' };
         head.appendChild(mk('span', 'noc-pill ' + sm.cls, sm.label));
+        if (t.status === 'deleted' && t.trashedTime) {
+            const dl = daysLeft(t.trashedTime);
+            const cls = dl <= 3 ? 'r' : dl <= 7 ? 'a' : 'g';
+            const pill = mk('span', 'noc-pill ' + cls, dl > 0 ? `~${dl} day${dl === 1 ? '' : 's'} left` : 'purge imminent');
+            pill.title = `Block trashed ${fmtTs(t.trashedTime)}. Est. permanent deletion in ~${Math.max(0, dl)} day(s), assuming ${RETENTION_DAYS}-day retention (varies by Notion plan).`;
+            head.appendChild(pill);
+        }
         head.appendChild(mk('span', t.blockTitle));
         if (t.anchorText) head.appendChild(mk('span', 'noc-anchor', '"' + t.anchorText.slice(0, 40) + '"'));
         if (t.comments.length > 1) head.appendChild(mk('span', t.comments.length + ' replies'));
@@ -545,7 +561,9 @@
     // one thread as markdown (used by per-thread Copy and the file export)
     function formatThread(t) {
         const sm = STATUS_META[t.status] || { label: t.status };
-        const head = `## [${sm.label}] ${t.blockTitle}${t.anchorText ? ' - anchor: "' + t.anchorText + '"' : ''}`;
+        const dl = (t.status === 'deleted' && t.trashedTime) ? daysLeft(t.trashedTime) : null;
+        const left = dl != null ? ` - ~${Math.max(0, dl)} day(s) left` : '';
+        const head = `## [${sm.label}${left}] ${t.blockTitle}${t.anchorText ? ' - anchor: "' + t.anchorText + '"' : ''}`;
         const body = t.comments.map((c) =>
             `- **${c.author || 'unknown'}**${c.ts ? ' - ' + fmtTs(c.ts) : ''}\n\n  ${(c.text || '').replace(/\n/g, '\n  ')}`).join('\n');
         return head + '\n' + body;
