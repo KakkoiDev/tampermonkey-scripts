@@ -2,7 +2,7 @@
 // @name         Notion Comment Recovery
 // @namespace    http://tampermonkey.net/
 // @icon         https://www.notion.so/front-static/favicon.ico
-// @version      2026.07.23.4
+// @version      2026.07.23.5
 // @description  Shows every comment Notion still stores for the current page - open, resolved, and comments whose block or anchor was deleted - in one floating panel, with export. Deep-scans version history to recover deleted-block comments retroactively.
 // @author       KakkoiDev
 // @match        https://www.notion.so/*
@@ -540,6 +540,13 @@
             head.appendChild(restore);
         }
 
+        if (t.status === 'anchor-gone' && t.blockId && t.discussionId) {
+            const re = mk('button', 'noc-act', 'Re-attach');
+            re.title = 'Re-attach this orphaned comment to its block (as a block-level comment)';
+            re.addEventListener('click', () => reattach(t, re));
+            head.appendChild(re);
+        }
+
         const copy = mk('button', 'noc-act', 'Copy');
         copy.addEventListener('click', () => copyText(formatThread(t)));
         head.appendChild(copy);
@@ -644,6 +651,32 @@
             log('restore failed', e);
             btn.disabled = false; btn.textContent = 'Restore failed - retry';
             void orig;
+        }
+    }
+
+    // Re-attach an orphaned (anchor-removed) comment: re-list the discussion on its still-alive block and
+    // drop it from the page's orphaned set. Notion then re-renders it as a block-level comment (whole-block
+    // highlight, not the original text span - the original span is gone). Verified live.
+    async function reattach(t, btn) {
+        if (!t.blockId || !t.discussionId || !currentPageId) return;
+        if (!window.confirm('Re-attach this comment to its block? It will reappear as a comment on that block (highlighting the whole block, since the original text is gone).')) return;
+        btn.disabled = true; btn.textContent = 'Re-attaching…';
+        try {
+            await apiPost('/api/v3/saveTransactionsFanout', {
+                requestId: crypto.randomUUID(),
+                transactions: [{
+                    id: crypto.randomUUID(), spaceId, debug: { userAction: 'NocReattach' },
+                    operations: [
+                        { pointer: { table: 'block', id: t.blockId, spaceId }, path: ['discussions'], command: 'listAfter', args: { id: t.discussionId } },
+                        { pointer: { table: 'block', id: currentPageId, spaceId }, path: ['format', 'orphaned_discussions'], command: 'listRemove', args: { id: t.discussionId } },
+                    ],
+                }],
+            });
+            btn.textContent = 'Re-attached ✓';
+            setTimeout(scan, 900);
+        } catch (e) {
+            log('reattach failed', e);
+            btn.disabled = false; btn.textContent = 'Re-attach failed - retry';
         }
     }
     function copyText(text) {
