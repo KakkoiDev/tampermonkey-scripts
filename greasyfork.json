@@ -108,6 +108,8 @@
     },
     {
       "file": "scripts/notion-comment-recovery.user.js",
+      "id": "588211",
+      "visibility": "unlisted",
       "name": "Notion Comment Recovery",
       "blurb": "See every comment on a Notion page in one panel - open, resolved, and comments whose block or anchor was deleted - with export and one-click restore"
     }
