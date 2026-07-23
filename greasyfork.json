@@ -105,6 +105,11 @@
       "visibility": "unlisted",
       "name": "Refined GitHub Preview Debanner",
       "blurb": "Remove the Refined GitHub HTML Preview warning banner on page load"
+    },
+    {
+      "file": "scripts/notion-comment-recovery.user.js",
+      "name": "Notion Comment Recovery",
+      "blurb": "See every comment on a Notion page in one panel - open, resolved, and comments whose block or anchor was deleted - with export and one-click restore"
     }
   ]
 }
