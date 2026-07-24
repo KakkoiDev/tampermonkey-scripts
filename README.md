@@ -126,4 +126,5 @@ Notes: the dedicated profile has no Tampermonkey, so the agent injects the scrip
 - **[PUBLISHING.md](docs/PUBLISHING.md)** - publishing to Greasy Fork and using this repo as a template.
 - **[DEVTOOLS-MCP.md](docs/DEVTOOLS-MCP.md)** - drive your logged-in Chrome from an AI agent to debug scripts on auth-gated sites.
 - **[EXTENSIONS.md](docs/EXTENSIONS.md)** - shipping a userscript as a Chrome extension (generated from the source), and where to publish.
+- **[CHROME-WEB-STORE.md](docs/CHROME-WEB-STORE.md)** - registering a Chrome Web Store account and publishing a generated extension.
 - **[IDEAS.md](docs/IDEAS.md)** - the backlog.

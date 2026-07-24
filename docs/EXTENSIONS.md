@@ -35,6 +35,8 @@ Colleagues can't freely sideload on Chrome, so "which store" matters. As of 2026
 | **Firefox AMO + self-distribution** | Firefox, one click | Closest thing to "F-Droid freedom": you can **self-distribute a signed XPI** (submit to AMO as *unlisted* for signing, host the file yourself, users install via web download). Firefox permits what Chrome forbids - **the venue for exotic extensions**. Cost: porting to Firefox's WebExtension quirks (`world:MAIN`, `declarativeNetRequest`, and MV3 details differ from Chrome). |
 | **Enterprise force-install** | Managed browsers only | Chrome/Edge admins can force-install a non-store `.crx` from a self-hosted URL via policy (machines must be domain-joined). The path if colleagues are on managed Chrome. |
 
+Step-by-step Chrome Web Store registration + submission (worked example: notion-comment-recovery): **[CHROME-WEB-STORE.md](CHROME-WEB-STORE.md)**.
+
 Key realities:
 - **There is no F-Droid-equivalent open store for Chrome.** Chrome auto-disables sideloaded `.crx`; non-store installs are dev-mode (with a startup nag) or enterprise force-install only. Self-distribution freedom lives on **Firefox**.
 - **Reach follows the browser.** An Edge or Firefox listing only helps colleagues who use that browser.
