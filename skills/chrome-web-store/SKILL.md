@@ -48,9 +48,10 @@ The API can't create a listing, so the first release is manual:
 
 1. In the [Developer Dashboard](https://chrome.google.com/webstore/devconsole): **Items -> Add new item -> Upload** the zip from Step 1. This creates the item and its **ID** (in the URL - save it).
 2. **Store listing:** product name, Summary (<=132) and Description, Category, Language, and upload the padded screenshots. All listing copy - name, summary, description, category, language, single-purpose, permission justification, privacy URL, visibility - lives in the extension's `store-listing.md` (e.g. `extensions/notion-comment-recovery/store-listing.md`).
-3. **Privacy tab:** single-purpose statement + permission justification (both in `store-listing.md`), the data-usage declaration (this repo's extensions collect/transmit nothing), and the **privacy-policy URL** (the extension's `PRIVACY.md` GitHub URL - it must be **pushed and live**, or review fails on a dead link).
-4. **Visibility:** Unlisted (shareable link) for a team tool, or Public. **Submit for review.**
-5. Save the item ID for Step 5.
+3. **Privacy practices tab:** single-purpose statement + host-permission justification (both in `store-listing.md`); **Remote code: No** (all code ships in the package; it only fetches data, no eval/remote scripts); the data-usage declaration (this repo's extensions collect/transmit nothing) + tick the compliance certification; and the **privacy-policy URL** (the extension's `PRIVACY.md` GitHub URL - it must be **pushed and live**, or review fails on a dead link).
+4. **Settings page:** set and **verify** a publisher contact email - publishing is blocked until the email is verified.
+5. **Visibility:** Unlisted (shareable link) for a team tool, or Public. **Submit for review.**
+6. Save the item ID for Step 5.
 
 ## Step 4 - API credentials (once)
 
