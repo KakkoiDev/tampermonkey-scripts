@@ -9,3 +9,6 @@ LEARN.md
 REVIEW.md
 COACH.md
 *.original.md
+
+# Chrome Web Store upload bundles (built with the zip command in docs/CHROME-WEB-STORE.md)
+*.zip
