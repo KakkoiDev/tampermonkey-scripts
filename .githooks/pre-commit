@@ -12,3 +12,10 @@ if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.user\.js$|^gre
     node tools/gen-readme.mjs || exit 1
     git add README.md
 fi
+
+# Regenerate companion Chrome extensions from their source userscript, so the extension .js
+# and manifest version can never drift from the .user.js (the single source of truth).
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.user\.js$|extensions/.*/source\.json$'; then
+    gen=$(node tools/build-extensions.mjs) || exit 1
+    if [ -n "$gen" ]; then git add $gen; fi
+fi
