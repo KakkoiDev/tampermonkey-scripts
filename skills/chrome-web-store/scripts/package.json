@@ -1,0 +1,9 @@
+{
+  "name": "chrome-web-store-skill-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Helpers for the chrome-web-store skill. pad-screenshot.mjs uses macOS sips (no deps); cws-publish.mjs needs chrome-webstore-upload.",
+  "dependencies": {
+    "chrome-webstore-upload": "^3.1.0"
+  }
+}
