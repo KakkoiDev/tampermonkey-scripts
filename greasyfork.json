@@ -112,6 +112,13 @@
       "visibility": "unlisted",
       "name": "Notion Comment Recovery",
       "blurb": "See every comment on a Notion page in one panel - open, resolved, and comments whose block or anchor was deleted - with export and one-click restore"
+    },
+    {
+      "file": "scripts/gm-trystero.user.js",
+      "id": "588309",
+      "visibility": "unlisted",
+      "name": "GM_trystero (trystero devtool)",
+      "blurb": "Exposes the full trystero WebRTC P2P API on window.GM_trystero on any page, for console-driven real-time experiments"
     }
   ]
 }

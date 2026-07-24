@@ -30,6 +30,7 @@ Small userscripts that bolt new features onto sites you already use - Google, Gi
 | [Slack DM Blur](scripts/slack-dm-blur.user.js) | Toggle in the Direct Messages header that blurs your DM feed and peek-card list so viewers can't read them while screensharing | `app.slack.com` | [Greasy Fork](https://greasyfork.org/en/scripts/586448) (unlisted - direct link) |
 | [Refined GitHub Preview Debanner](scripts/refined-github-preview-debanner.user.js) | Remove the Refined GitHub HTML Preview warning banner on page load | `refined-github-html-preview.kidonng.workers.dev` | [Greasy Fork](https://greasyfork.org/en/scripts/586441) (unlisted - direct link) |
 | [Notion Comment Recovery](scripts/notion-comment-recovery.user.js) | See every comment on a Notion page in one panel - open, resolved, and comments whose block or anchor was deleted - with export and one-click restore | `www.notion.so`, `app.notion.com`, `*.notion.so` | [Greasy Fork](https://greasyfork.org/en/scripts/588211) (unlisted - direct link) |
+| [GM_trystero (trystero devtool)](scripts/gm-trystero.user.js) | Exposes the full trystero WebRTC P2P API on window.GM_trystero on any page, for console-driven real-time experiments | `*` | [Greasy Fork](https://greasyfork.org/en/scripts/588309) (unlisted - direct link) |
 <!-- scripts:end -->
 
 **Just want to use one?** Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension, click the Greasy Fork link for any script above, and hit *Install*. That's the whole thing - no coding required.
