@@ -60,7 +60,7 @@ In the Developer Dashboard: **Items -> Add new item -> upload the zip**. Then fi
 - **Description:** paste from the appendix.
 - **Category:** Workflow & Planning
 - **Language:** English
-- **Store icon:** taken from the 128px icon in the zip; upload `icons/icon-128.png` if asked.
+- **Store icon:** upload `store-icon-128.png` (128x128, with the art at 96x96 centered + 16px transparent padding, per the CWS image guidelines - no edge bleed). The manifest's `icons/icon-128.png` is full-bleed for the toolbar; don't use it as the store icon.
 - **Screenshots:** upload yours from step 2d.
 
 **Privacy tab**

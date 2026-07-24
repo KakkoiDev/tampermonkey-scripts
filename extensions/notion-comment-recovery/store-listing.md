@@ -5,6 +5,7 @@ Canonical, paste-ready copy for the Developer Dashboard listing. Written to CWS 
 - **Product name:** Notion Comment Recovery
 - **Category:** Workflow & Planning (`CATEGORY_WORKFLOW_AND_PLANNING`)
 - **Language:** English
+- **Store icon:** `store-icon-128.png` (128x128; 96x96 artwork + 16px transparent padding per CWS guidelines). Do NOT use the manifest's `icons/icon-128.png` here - those are full-bleed for the toolbar.
 - **Visibility:** Unlisted (shareable by direct link, not shown in search) - or Public to make it discoverable.
 - **Privacy policy URL:** https://github.com/KakkoiDev/tampermonkey-scripts/blob/main/extensions/notion-comment-recovery/PRIVACY.md
 - **Data usage:** does not collect or transmit user data (all local + same-origin Notion). Tick "not sold to third parties" and "not used for unrelated purposes."

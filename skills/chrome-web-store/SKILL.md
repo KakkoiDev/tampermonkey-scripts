@@ -20,7 +20,7 @@ Publish and keep a companion Chrome extension updated on the Chrome Web Store. E
 ## Prerequisites
 
 - A registered CWS developer account (one-time US$5). If Google Payments errors on desktop (`OR_*`), retry with browser extensions off / in incognito, or on a phone.
-- The extension prepped - icons, manifest, privacy policy. See [docs/CHROME-WEB-STORE.md](../../docs/CHROME-WEB-STORE.md) (icons come from `tools/make-icons.mjs`).
+- The extension prepped - icons, manifest, privacy policy. See [docs/CHROME-WEB-STORE.md](../../docs/CHROME-WEB-STORE.md) (icons come from `tools/make-icons.mjs`). The dashboard **Store icon** must be 128x128 with the art at ~96x96 centered + transparent padding (no edge bleed) - a separate, padded PNG from the full-bleed manifest/toolbar icons.
 - For API updates only: OAuth credentials (Step 4) + a one-time `npm install` in this skill's `scripts/`.
 
 ## Step 1 - package the upload zip
