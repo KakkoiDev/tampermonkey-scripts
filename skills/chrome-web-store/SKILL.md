@@ -64,24 +64,30 @@ Four secrets; keep them out of git:
    CWS_CLIENT_ID=... CWS_CLIENT_SECRET=... node skills/chrome-web-store/scripts/get-refresh-token.mjs
    ```
    It opens the consent screen (redirects to `http://localhost:8976`), then prints `CWS_REFRESH_TOKEN=...`. An **unverified-app** warning is expected - Advanced -> proceed (your own app; `chromewebstore` is a sensitive, not restricted, scope, so no formal verification is needed).
-4. Store the four in a **home env file, never in git** - `~/.config/cws-publish.env`, `chmod 600`, plain `KEY=value` (no `export`):
+4. **Store the credentials** so publishing needs no copy-paste. The client secret + refresh token are passwords; the extension ID + client ID are public. Two options:
+
+   **A - OS keyring (recommended; encrypted, no plaintext file).** With the `CWS_*` vars set in your shell (Steps 1-3), run:
+   ```sh
+   node skills/chrome-web-store/scripts/cws-keychain.mjs store   # check | clear also
    ```
-   CWS_EXTENSION_ID=<item id from Step 3>
-   CWS_CLIENT_ID=...
-   CWS_CLIENT_SECRET=...
-   CWS_REFRESH_TOKEN=...
-   ```
-   Load it per-run with Node's `--env-file` (see Step 5) so the secrets never enter the shell env, the command line, or a transcript. (macOS Keychain is a more-secure alternative.) The refresh token is long-lived once the consent app is In production; the client secret + token are passwords - treat them as such.
+   Uses macOS Keychain or Linux libsecret (`secret-tool`); `cws-publish.mjs` then reads them automatically.
+
+   **B - env file (portable, headless-friendly).** `~/.config/cws-publish.env`, `chmod 600`, plain `KEY=value`, loaded per-run with Node's `--env-file` (Step 5). Use this on a headless Linux box (no keyring daemon) or as the transfer medium between machines.
+
+   **Another machine:** keyrings don't sync. On the new box, either re-run `get-refresh-token.mjs` to mint a fresh token there (cleanest - no secret leaves the first machine), or securely copy an env file (B) once and `cws-keychain.mjs store` from it. The refresh token is long-lived once the consent app is In production.
 
 ## Step 5 - publish updates (API)
 
 ```sh
 npm install   # one-time, in skills/chrome-web-store/scripts
 node skills/chrome-web-store/scripts/make-zip.mjs extensions/<name>
+# creds from the OS keyring (Step 4-A):
+node skills/chrome-web-store/scripts/cws-publish.mjs extensions/<name>-cws.zip
+# or, with an env file (Step 4-B):
 node --env-file="$HOME/.config/cws-publish.env" skills/chrome-web-store/scripts/cws-publish.mjs extensions/<name>-cws.zip
 ```
 
-`make-zip.mjs` needs no credentials. `--env-file` loads them from the home file (Step 4) for `cws-publish.mjs` without ever printing them - never `cat` that file into a transcript.
+`make-zip.mjs` needs no credentials. With the keyring, `cws-publish.mjs` loads the secrets itself (nothing printed); with the env file, `--env-file` supplies them - never `cat` that file into a transcript. `--id=<extId>` overrides the extension ID (it is public).
 
 Re-package (Step 1) first so the zip has the bumped version. Flags:
 - `--upload-only` - upload a draft without publishing (review in the dashboard, then re-run without it). **Use this on the first API run.**
