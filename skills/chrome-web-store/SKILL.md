@@ -17,6 +17,26 @@ Publish and keep a companion Chrome extension updated on the Chrome Web Store. E
 - **Version updates are API-automatable.** Once the item exists and its listing is filled, `scripts/cws-publish.mjs` uploads a new zip to that item and publishes it, no dashboard. Listing changes (new screenshots, new copy) still go through the dashboard.
 - **The version must increase every update.** The repo's pre-commit hook bumps the extension manifest `version` from the userscript `@version`, so a committed change is enough.
 
+## The pieces
+
+Per extension, in `extensions/<name>/`:
+- `manifest.json` - hand-written MV3 manifest (world/matches/run_at/permissions/icons); its `version` auto-syncs from the userscript.
+- `source.json` - names the source userscript. `tools/build-extensions.mjs` (pre-commit hook) regenerates the content-script `.js` from it - **never hand-edit the generated `.js`.**
+- `icon.svg` + `icons/icon-*.png` - full-bleed toolbar icons (`tools/make-icons.mjs`).
+- `icon-store.svg` + `store-icon-128.png` - the padded 128px **Store** icon for the dashboard (distinct from the toolbar icons).
+- `PRIVACY.md` - privacy policy; host its GitHub URL.
+- `store-listing.md` - all listing copy (summary, description, single-purpose, permission justification, category, language, visibility) **plus the item ID**. The paste source for the dashboard.
+- a 1280x800 (or 640x400) screenshot.
+
+Skill scripts, in `skills/chrome-web-store/scripts/`:
+- `make-zip.mjs` - package the upload zip (runtime files derived from the manifest).
+- `pad-screenshot.mjs` - resize/letterbox a screenshot to a valid size.
+- `get-refresh-token.mjs` - one-off OAuth loopback flow to mint the API refresh token.
+- `keyring.mjs` + `cws-keychain.mjs` - store the API creds in the OS keyring (macOS Keychain / Linux libsecret).
+- `cws-publish.mjs` - upload a new zip to the item and publish (API version-updates only; resolves each cred from env then the keyring).
+
+End-to-end flow: build/debug the userscript -> the hook generates the extension -> `make-zip` -> **first publish is manual in the dashboard** (fills the listing, mints the item ID) -> store the creds once (`cws-keychain store`) -> every later version publishes headless with `cws-publish` (secrets from the keyring; the public item ID from `--id` or `store-listing.md`).
+
 ## Prerequisites
 
 - A registered CWS developer account (one-time US$5). If Google Payments errors on desktop (`OR_*`), retry with browser extensions off / in incognito, or on a phone.
