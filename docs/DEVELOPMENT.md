@@ -9,7 +9,7 @@ Edit a userscript file on disk, reload the page, see the change - no copy-paste 
 The real code stays **on disk**; a small **dev loader** stays in Tampermonkey. The loader's last line is the linchpin:
 
 ```javascript
-// @require      file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/<script>.user.js
+// @require      file:///Users/cyril.antoni/Code/webmods/scripts/<script>.user.js
 ```
 
 That `@require file://<absolute path>` makes Tampermonkey load the on-disk file as a library **every time a matching page loads**. So the disk file is the single source of truth, and the edit-test cycle is:
@@ -30,7 +30,7 @@ One dev loader per script, created once in Tampermonkey. Steps:
 1. Tampermonkey dashboard -> **Create a new script** (the `+` tab).
 2. Delete the template, paste the **dev loader** block below.
 3. Fill every `<...>` placeholder from the real script's own metadata - leave none behind.
-4. Point `@require file://` at the script's **absolute** on-disk path (e.g. `file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/<script>.user.js`).
+4. Point `@require file://` at the script's **absolute** on-disk path (e.g. `file:///Users/cyril.antoni/Code/webmods/scripts/<script>.user.js`).
 5. **Save** (Cmd/Ctrl+S), and **disable any published/synced copy** of the same script so it doesn't run twice alongside the loader.
 
 The loader pulls the real file from disk:
@@ -73,7 +73,7 @@ Example loader for `scripts/github-pr-copy-diff.user.js`:
 // @grant        GM_setClipboard
 // @connect      github.com
 // @connect      githubusercontent.com
-// @require      file:///Users/cyril.antoni/Code/tampermonkey-scripts/scripts/github-pr-copy-diff.user.js
+// @require      file:///Users/cyril.antoni/Code/webmods/scripts/github-pr-copy-diff.user.js
 // ==/UserScript==
 ```
 
