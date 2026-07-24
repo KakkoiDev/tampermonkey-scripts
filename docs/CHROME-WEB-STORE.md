@@ -58,7 +58,7 @@ In the Developer Dashboard: **Items -> Add new item -> upload the zip**. Then fi
 - **Product name:** Notion Comment Recovery
 - **Summary** (<= 132): paste from the appendix.
 - **Description:** paste from the appendix.
-- **Category:** Productivity
+- **Category:** Workflow & Planning
 - **Language:** English
 - **Store icon:** taken from the 128px icon in the zip; upload `icons/icon-128.png` if asked.
 - **Screenshots:** upload yours from step 2d.
@@ -81,6 +81,8 @@ Later, this can be automated end to end: CWS has a publish API (`chrome-webstore
 
 ## Appendix - paste-ready listing copy
 
+_Canonical source: [extensions/notion-comment-recovery/store-listing.md](../extensions/notion-comment-recovery/store-listing.md) (also has category, language, visibility). This mirrors it - edit that file._
+
 **Summary (<= 132 chars)**
 ```
 See every comment Notion stores for a page - open, resolved, and on deleted blocks or removed anchors - in one panel, with export and restore.
@@ -88,24 +90,51 @@ See every comment Notion stores for a page - open, resolved, and on deleted bloc
 
 **Description**
 ```
-Notion Comment Recovery surfaces every comment Notion still stores for the page you're on - not just the ones visible inline.
+Notion Comment Recovery shows you every comment Notion still stores for the page you're on - not just the ones you can see. Comments don't always disappear when they look gone: delete the block a comment is on, or remove the text it was anchored to, and Notion hides the comment while quietly keeping the record. This extension surfaces all of it in one panel, lets you export it, and can bring deleted comments back.
 
-It shows, in one floating panel:
-- Open and resolved comments.
-- Comments whose anchor text was removed ("orphaned").
-- Comments on blocks that were deleted - which Notion hides, but still keeps.
+WHAT IT SHOWS
 
-It also deep-scans the page's version history to recover comments on blocks deleted long ago, and passively captures comments as you browse so they survive even after deletion.
+Open the "comments" badge in the top-right of any Notion page to see, in one place:
+- Open comments and their replies.
+- Resolved comments.
+- Orphaned comments - ones whose anchor text was edited away, so Notion stopped showing them inline.
+- Deleted-block comments - comments on blocks that were deleted. Notion hides these but keeps the records; the panel brings them back into view.
+- Deleted comments - comments that were removed entirely, recovered from a local cache if they were seen while you browsed.
 
-What you can do:
-- Filter by all / deleted / resolved / open.
-- Export the page's comments to a Markdown file.
-- Restore a deleted block so its comment reappears inline, or re-attach an orphaned comment to its block - one click, with a confirm.
-- See an estimated countdown before a trashed block is permanently purged.
+Filter the list by All / Deleted / Resolved / Open, and read a per-thread status pill so you always know what state each comment is in.
 
-Privacy: everything runs locally in your browser. It reads only your own Notion data through Notion's API using your existing session, and sends nothing to any other server. No tracking, no analytics.
+WHAT YOU CAN DO
 
-Honest limit: it can only recover comments that were snapshotted by Notion's version history or seen live while the extension was running. A comment created and deleted before it was ever captured can't be recovered - nothing references it.
+- Export the page's comments to a Markdown file - a clean, dated archive with author names, timestamps, block titles, and anchor text.
+- Copy any single thread to the clipboard.
+- Jump to a live comment ("Go") to scroll straight to it on the page.
+- Restore a deleted block, so its comment reappears inline - put back in its original position when that can be recovered from history.
+- Re-attach an orphaned comment to its block, so it shows up again as a block-level comment.
+- See a purge countdown on deleted blocks - an estimate of how many days remain before Notion permanently removes a trashed block, so you can rescue a comment before it's gone for good.
+
+Restore and re-attach write to your workspace, so they're always behind a confirmation.
+
+HOW IT FINDS COMMENTS
+
+It pulls from four sources, all through Notion's own API using your existing login - no token, no setup:
+- The live page tree - every open and resolved comment.
+- The page's orphaned-discussion records - anchor-removed comments.
+- Version history - a deep scan of past snapshots recovers comments on blocks deleted long ago.
+- A passive cache - while you browse, it records the comments Notion loads, so a comment survives in the archive even after its block, or the comment itself, is deleted. This is the only way to catch deletions that happen before a version snapshot exists.
+
+Every comment is then categorized by the current state of its block, and comments that belong to other pages (backlinks, mentions, your inbox) are filtered out.
+
+PRIVACY
+
+Everything runs locally in your browser. The extension reads only your own Notion data, through Notion's API, using your existing session - and sends nothing to any other server. There is no analytics, no tracking, no telemetry, and it asks for no special browser permissions; it runs only on Notion pages. The small local cache it keeps to recover deleted comments never leaves your browser and is cleared when you clear the site's data.
+
+HONEST LIMIT
+
+It can only recover comments that Notion snapshotted in version history, or that were seen live while the extension was running. A comment that was created and then deleted before it was ever captured - no snapshot, never browsed with the extension active - can't be recovered, because nothing references it anymore. This is a real limit of what's retrievable, not a bug.
+
+WHO IT'S FOR
+
+Anyone who relies on Notion comments for decisions, feedback, or records and has been burned by one vanishing when a block was deleted or edited. If you've ever thought "there was a comment here and now it's gone," this is for you.
 ```
 
 **Single purpose**

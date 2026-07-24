@@ -47,8 +47,8 @@ macOS (uses `sips`). It letterboxes on `--bg` and prints a **WARNING** when the 
 The API can't create a listing, so the first release is manual:
 
 1. In the [Developer Dashboard](https://chrome.google.com/webstore/devconsole): **Items -> Add new item -> Upload** the zip from Step 1. This creates the item and its **ID** (in the URL - save it).
-2. **Store listing:** product name, Summary (<=132) and Description, Category, Language, and upload the padded screenshots. Copy for the name/summary/description is in [docs/CHROME-WEB-STORE.md](../../docs/CHROME-WEB-STORE.md)'s appendix.
-3. **Privacy tab:** single-purpose statement + permission justification (both in the appendix), the data-usage declaration (this repo's extensions collect/transmit nothing), and the **privacy-policy URL** (the extension's `PRIVACY.md` GitHub URL - it must be **pushed and live**, or review fails on a dead link).
+2. **Store listing:** product name, Summary (<=132) and Description, Category, Language, and upload the padded screenshots. All listing copy - name, summary, description, category, language, single-purpose, permission justification, privacy URL, visibility - lives in the extension's `store-listing.md` (e.g. `extensions/notion-comment-recovery/store-listing.md`).
+3. **Privacy tab:** single-purpose statement + permission justification (both in `store-listing.md`), the data-usage declaration (this repo's extensions collect/transmit nothing), and the **privacy-policy URL** (the extension's `PRIVACY.md` GitHub URL - it must be **pushed and live**, or review fails on a dead link).
 4. **Visibility:** Unlisted (shareable link) for a team tool, or Public. **Submit for review.**
 5. Save the item ID for Step 5.
 
@@ -79,6 +79,15 @@ Re-package (Step 1) first so the zip has the bumped version. Flags:
 - `--target=trustedTesters` - publish to your testers group instead of the public.
 
 It uploads the package to `CWS_EXTENSION_ID` and publishes, printing the upload state and publish status.
+
+## Categories
+
+Pick one in the dashboard's Store listing tab. The selectable categories (2026), by group:
+- **Productivity:** Communication, Developer Tools, Education, Tools, Workflow & Planning
+- **Lifestyle:** Art & Design, Entertainment, Games, Household, Just for Fun, News & Weather, Shopping, Social Networking, Travel, Well-being
+- **Make Chrome Yours:** Accessibility, Functionality & UI, Privacy & Security
+
+The three group names (Productivity / Lifestyle / Make Chrome Yours) are headers, not selectable. A Notion / collaboration / productivity tool like notion-comment-recovery -> **Workflow & Planning**.
 
 ## Cautions
 
