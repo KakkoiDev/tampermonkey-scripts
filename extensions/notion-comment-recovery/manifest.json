@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Notion Comment Recovery",
+  "version": "2026.7.23.5",
+  "minimum_chrome_version": "111",
+  "description": "Recover and export Notion comments - open, resolved, and comments on deleted blocks or removed anchors - from a floating panel.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.notion.so/*",
+        "https://app.notion.com/*",
+        "https://*.notion.so/*"
+      ],
+      "js": ["notion-comment-recovery.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

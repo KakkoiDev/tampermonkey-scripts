@@ -1,0 +1,4 @@
+{
+  "userscript": "scripts/notion-comment-recovery.user.js",
+  "out": "notion-comment-recovery.js"
+}
