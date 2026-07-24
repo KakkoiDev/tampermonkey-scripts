@@ -1,10 +1,10 @@
 <!--
-Tampermonkey Scripts - talk deck. Plain markdown; slides split on `---`.
+webmods - talk deck. Plain markdown; slides split on `---`.
 Built with Marp: `sh build.sh` (or `npx --yes @marp-team/marp-cli deck.md -o deck.html`).
 Renders in any markdown viewer too.
 -->
 
-# Tampermonkey Scripts
+# webmods
 
 ## Vibe code features into your favorite websites
 
