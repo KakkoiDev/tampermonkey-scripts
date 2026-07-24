@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "CSP Unlock (P2P devtool)",
+  "version": "0.1.0",
+  "description": "Removes the Content-Security-Policy response header on page loads flagged with __nocsp=1, so the GM_trystero devtool can connect on strict-CSP sites. Only affects flagged loads.",
+  "permissions": ["declarativeNetRequest"],
+  "host_permissions": ["<all_urls>"],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "csp_unlock",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
