@@ -64,20 +64,24 @@ Four secrets; keep them out of git:
    CWS_CLIENT_ID=... CWS_CLIENT_SECRET=... node skills/chrome-web-store/scripts/get-refresh-token.mjs
    ```
    It opens the consent screen (redirects to `http://localhost:8976`), then prints `CWS_REFRESH_TOKEN=...`.
-4. Export all four (shell profile or a local, gitignored env file):
-   ```sh
-   export CWS_EXTENSION_ID=...   # the item ID from Step 3
-   export CWS_CLIENT_ID=...
-   export CWS_CLIENT_SECRET=...
-   export CWS_REFRESH_TOKEN=...
+4. Store the four in a **home env file, never in git** - `~/.config/cws-publish.env`, `chmod 600`, plain `KEY=value` (no `export`):
    ```
+   CWS_EXTENSION_ID=<item id from Step 3>
+   CWS_CLIENT_ID=...
+   CWS_CLIENT_SECRET=...
+   CWS_REFRESH_TOKEN=...
+   ```
+   Load it per-run with Node's `--env-file` (see Step 5) so the secrets never enter the shell env, the command line, or a transcript. (macOS Keychain is a more-secure alternative.) The refresh token is long-lived once the consent app is In production; the client secret + token are passwords - treat them as such.
 
 ## Step 5 - publish updates (API)
 
 ```sh
 npm install   # one-time, in skills/chrome-web-store/scripts
-node skills/chrome-web-store/scripts/cws-publish.mjs extensions/<name>-cws.zip
+node skills/chrome-web-store/scripts/make-zip.mjs extensions/<name>
+node --env-file="$HOME/.config/cws-publish.env" skills/chrome-web-store/scripts/cws-publish.mjs extensions/<name>-cws.zip
 ```
+
+`make-zip.mjs` needs no credentials. `--env-file` loads them from the home file (Step 4) for `cws-publish.mjs` without ever printing them - never `cat` that file into a transcript.
 
 Re-package (Step 1) first so the zip has the bumped version. Flags:
 - `--upload-only` - upload a draft without publishing (review in the dashboard, then re-run without it). **Use this on the first API run.**
