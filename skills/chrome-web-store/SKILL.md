@@ -48,7 +48,7 @@ The API can't create a listing, so the first release is manual:
 
 1. In the [Developer Dashboard](https://chrome.google.com/webstore/devconsole): **Items -> Add new item -> Upload** the zip from Step 1. This creates the item and its **ID** (in the URL - save it).
 2. **Store listing:** product name, Summary (<=132) and Description, Category, Language, and upload the padded screenshots. All listing copy - name, summary, description, category, language, single-purpose, permission justification, privacy URL, visibility - lives in the extension's `store-listing.md` (e.g. `extensions/notion-comment-recovery/store-listing.md`).
-3. **Privacy practices tab:** single-purpose statement + host-permission justification (both in `store-listing.md`); **Remote code: No** (all code ships in the package; it only fetches data, no eval/remote scripts); the data-usage declaration (this repo's extensions collect/transmit nothing) + tick the compliance certification; and the **privacy-policy URL** (the extension's `PRIVACY.md` GitHub URL - it must be **pushed and live**, or review fails on a dead link).
+3. **Privacy practices tab** (in the item's left-hand menu, not the main dashboard): single-purpose statement + host-permission justification (both in `store-listing.md`); **Remote code: No** (all code ships in the package; it only fetches data, no eval/remote scripts - if it errors "justification required," the toggle is still on Yes); the data-usage declaration (this repo's extensions collect/transmit nothing) + tick the compliance certification; and the **privacy-policy URL** (the extension's `PRIVACY.md` GitHub URL - it must be **pushed and publicly reachable**, or review fails on a dead link; verify it loads before pasting).
 4. **Settings page:** set and **verify** a publisher contact email - publishing is blocked until the email is verified.
 5. **Visibility:** Unlisted (shareable link) for a team tool, or Public. **Submit for review.**
 6. Save the item ID for Step 5.
@@ -58,12 +58,12 @@ The API can't create a listing, so the first release is manual:
 Four secrets; keep them out of git:
 
 1. [Google Cloud Console](https://console.cloud.google.com): create/pick a project and **enable the "Chrome Web Store API."**
-2. Configure the **OAuth consent screen** and set its publishing status to **In production** - Testing-mode refresh tokens expire after 7 days. Then create an **OAuth 2.0 Client ID**, application type **Desktop**; note the **client ID** and **client secret**.
+2. Configure the **OAuth consent screen**: audience **External** (Internal is Workspace-only), then **Publish app / In production**. Testing mode causes two failures - refresh tokens expire in 7 days, and consent returns **403 `access_denied`** for anyone not on the Test-users list. (Alternative to publishing: add your email under **Test users**, accepting the 7-day expiry.) Then create an **OAuth 2.0 Client ID**, application type **Desktop**; note the **client ID** and **client secret**.
 3. Get a **refresh token** (loopback flow, no deps):
    ```sh
    CWS_CLIENT_ID=... CWS_CLIENT_SECRET=... node skills/chrome-web-store/scripts/get-refresh-token.mjs
    ```
-   It opens the consent screen (redirects to `http://localhost:8976`), then prints `CWS_REFRESH_TOKEN=...`.
+   It opens the consent screen (redirects to `http://localhost:8976`), then prints `CWS_REFRESH_TOKEN=...`. An **unverified-app** warning is expected - Advanced -> proceed (your own app; `chromewebstore` is a sensitive, not restricted, scope, so no formal verification is needed).
 4. Store the four in a **home env file, never in git** - `~/.config/cws-publish.env`, `chmod 600`, plain `KEY=value` (no `export`):
    ```
    CWS_EXTENSION_ID=<item id from Step 3>
