@@ -32,7 +32,7 @@ Already valid for CWS: `manifest_version: 3`, `name`, `version` (auto-synced fro
 CWS requires a privacy policy URL for anything that touches user data. This repo hosts one per extension: `extensions/notion-comment-recovery/PRIVACY.md`. Use its GitHub URL in the listing:
 
 ```
-https://github.com/KakkoiDev/tampermonkey-scripts/blob/main/extensions/notion-comment-recovery/PRIVACY.md
+https://github.com/KakkoiDev/webmods/blob/main/extensions/notion-comment-recovery/PRIVACY.md
 ```
 
 ### d. Screenshots (you must capture these)

@@ -42,13 +42,8 @@ Key realities:
 - **Reach follows the browser.** An Edge or Firefox listing only helps colleagues who use that browser.
 - **For faster iteration / exotic extensions:** Edge (parallel review, same code) for speed; Firefox self-hosted signed XPI for anything Chrome/Edge reject.
 
-## Open idea: rename the project
+## The project was renamed to `webmods`
 
-If the extension-building path proves out, "tampermonkey-scripts" undersells it (it would hold userscripts **and** generated extensions). A candidate name floated: **ExtensionMonkey**.
+Formerly `tampermonkey-scripts` - the old name only covered the userscript half; `webmods` names what it actually is: userscripts **and** the Chrome extensions generated from them.
 
-Before renaming, weigh:
-- **Greasy Fork sync breaks.** Every published script syncs from a raw GitHub URL containing the repo name (`raw.githubusercontent.com/<owner>/tampermonkey-scripts/...`). Renaming the repo requires re-pointing every script's sync-from-URL (`node skills/greasyfork/scripts/release.mjs all`); GitHub redirects are not safe to rely on for raw URLs.
-- **Also update:** the git remote and README. (`greasyfork.json` derives owner/repo from `git remote`, so that follows automatically.)
-- **Name connotation:** the `-monkey` family (Tampermonkey, Violentmonkey, Greasemonkey) are userscript *managers*. "ExtensionMonkey" reads like another manager, not a repo of scripts + generated extensions. Prefer a name that says what it is.
-
-Defer the rename until the path is proven: an extension loads and works in Chrome, and the generator has produced a few extensions cleanly.
+The one non-automatic part of a repo rename: every Greasy Fork script syncs from a raw GitHub URL containing the repo name (`raw.githubusercontent.com/<owner>/<repo>/...`), and GitHub's rename redirect is not reliable for raw URLs - so each script's sync-from-URL was re-pointed with `node skills/greasyfork/scripts/release.mjs all` after the rename. Everything else auto-redirects: git clone/fetch/push and web links keep working, and `greasyfork.json` derives owner/repo from `git remote`, so it follows automatically. (If the CWS listing's privacy-policy URL used the old repo name, update it in the dashboard too.)

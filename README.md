@@ -1,4 +1,4 @@
-# Tampermonkey Scripts
+# webmods
 
 > **Vibe code features into your favorite websites!**
 

@@ -1,4 +1,4 @@
-# Tampermonkey scripts - project instructions
+# webmods - project instructions
 
 ## Always: dev loader block for new scripts
 

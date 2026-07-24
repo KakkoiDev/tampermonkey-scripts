@@ -10,7 +10,7 @@ Renders in any markdown viewer too.
 
 Add or fix features on any site you use - just by chatting with an AI.
 
-`github.com/KakkoiDev/tampermonkey-scripts`
+`github.com/KakkoiDev/webmods`
 
 ---
 
@@ -96,7 +96,7 @@ Build one, live:
 
 Everything is here, ready to install:
 
-`github.com/KakkoiDev/tampermonkey-scripts`
+`github.com/KakkoiDev/webmods`
 
 1. Install the **Tampermonkey** browser extension.
 2. Open the repo, click any script's **Greasy Fork** link, hit **Install**.
@@ -108,4 +108,4 @@ Everything is here, ready to install:
 
 Questions?
 
-`github.com/KakkoiDev/tampermonkey-scripts`
+`github.com/KakkoiDev/webmods`

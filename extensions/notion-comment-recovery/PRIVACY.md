@@ -19,4 +19,4 @@ Notion Comment Recovery is a browser extension that shows and recovers the comme
 
 ## Contact
 
-Questions or issues: open an issue at <https://github.com/KakkoiDev/tampermonkey-scripts>.
+Questions or issues: open an issue at <https://github.com/KakkoiDev/webmods>.
