@@ -56,5 +56,16 @@ Does not work. Documented so we stop revisiting it:
 ### "`@require` from gh raw to bypass CSP"
 Misconception. `@require` bypasses page CSP only for *loading the required file's code*. The runtime `import()` and the signaling `wss` still run in page context under page CSP. `@require`-ing our script (or a bundled trystero) does not make P2P connect on strict sites. gh raw is a valid distribution source for the code, but see item 1 for why jsDelivr-from-gh is preferred over raw.
 
-## The one hard limit (any version)
-The signaling WebSocket (`wss` to relays) is governed by the page's `connect-src`, and no userscript-level mechanism bypasses it (GM_xmlhttpRequest is HTTP-only, not WebSocket). On strict-CSP sites, peers connect only if the user enables Tampermonkey's "Modify existing CSP headers" setting (a global toggle and a real security downgrade) or runs on a permissive origin. "Runs on every page" means the script and console helpers load wherever injection is allowed; peers connect on the subset of sites where the signaling `wss` is permitted.
+## CSP on strict sites (tested findings)
+
+The esm.sh `import()` and the signaling WebSocket (`wss` to relays) are both governed by the page's CSP, and **no in-userscript mechanism relaxes it**:
+- GM_xmlhttpRequest is HTTP-only, so it does not cover WebSocket.
+- **Tested and dead:** running in Tampermonkey's isolated world (`@sandbox DOM`) does NOT exempt WebSockets from the page's `connect-src`. On Notion the isolated-world probe was blocked with an explicit CSP violation. Chrome's "content scripts have their own CSP" does not hold for Tampermonkey's sandbox + WebSocket.
+- CSP is immutable-downward once the document loads, so nothing at `load()` time can relax it from inside the page.
+
+Proven ways to connect on strict sites:
+1. **Companion extension** `extensions/csp-unlock` + `GM_trystero.load({ disableCSP: true })` - a `declarativeNetRequest` rule strips the CSP header only on loads carrying `__nocsp=1`. Verified working on Notion: import, wss, and peer messaging all succeeded. This is the recommended path; it scopes the CSP downgrade to flagged loads instead of all browsing.
+2. Tampermonkey's global "Modify existing CSP headers" setting - blunt, affects every site while on.
+3. A permissive origin (`openTab`), which never had CSP to begin with.
+
+"Runs on every page" means the script and console helpers load wherever injection is allowed; peers connect where CSP permits the `wss`, or where option 1/2 removes it.
