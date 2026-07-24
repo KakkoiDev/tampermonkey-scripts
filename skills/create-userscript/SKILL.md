@@ -51,6 +51,10 @@ The scaffolded body is a stub (`// TODO`). Now write the actual feature. When it
 
 If the repo uses Greasy Fork, hand off to the `greasyfork` skill to register and sync. This skill only scaffolds and builds; it does not publish.
 
+## 5. Package as a Chrome extension (optional)
+
+A userscript can also ship as a Chrome extension - one-click install, no Tampermonkey - for colleagues who won't set up a userscript manager. The **userscript stays the single source of truth**: never hand-copy the script into an extension. Add `extensions/<name>/` with a hand-written `manifest.json` and a `source.json` pointing at the `.user.js`, and `tools/build-extensions.mjs` (run by the pre-commit hook) generates the extension's code and syncs its manifest version. Use `world: "MAIN"` in the manifest if the script needs the page realm (page globals, or hooking the page's `fetch`/`XHR`). Full guide: **[docs/EXTENSIONS.md](../../docs/EXTENSIONS.md)**.
+
 ## Portability
 
 Self-contained: the scaffolder and this SKILL.md carry everything needed. The `greasyfork.json`/README integration is auto-detected - present in the origin repo, skipped elsewhere. Copy the `skills/create-userscript/` directory into any userscript repo to use it there.

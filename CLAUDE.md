@@ -49,3 +49,15 @@ Sites with hashed/minified class names (e.g. Google's `lnXdpd`) will burn you if
 3. **Overlay without reflow** - position the injected element `absolute`/`fixed` against the anchor's rect; in-flow insertion shifts the page (it pushed Google's logo down).
 4. **Verify with a screenshot before committing** - don't ship placement you haven't seen.
 5. **For behavior bugs, instrument - don't re-guess** - static `outerHTML` won't reveal runtime state (hover-only UI, hidden chars like `\uFEFF`, which code path actually ran). On an auth-gated site you can't see, when a fix fails, add a temporary `console.log` and have the user paste it rather than patching blind a second time. See [Debugging on a logged-in site](docs/DEVELOPMENT.md#debugging-on-a-logged-in-site).
+
+## Companion Chrome extensions: edit the userscript, not the generated copy
+
+Some userscripts are also shipped as Chrome extensions (under `extensions/<name>/`) so colleagues can install them without Tampermonkey. Rules for developing in this setup:
+
+- **The `.user.js` is the single source of truth.** The extension's content-script `.js` is GENERATED from it by `tools/build-extensions.mjs` and carries a `// GENERATED ... do not edit` banner. Never hand-edit that file - edit `scripts/<name>.user.js`.
+- Each generated extension has a `extensions/<name>/source.json` naming its source userscript. The hand-written `manifest.json` holds extension-only metadata; its `version` is auto-synced to the userscript `@version` by the generator.
+- The **pre-commit hook regenerates and re-stages** the extension on any `.user.js` / `source.json` change (the same pattern as `gen-readme` for the README). Don't bypass it, and don't commit hand-edits to a generated `.js`.
+- Extensions with **no `source.json`** (e.g. `csp-unlock`) are hand-authored - the generator leaves them alone.
+- In the manifest, use `world: "MAIN"` when the script needs the page realm (page globals, or hooking the page's `fetch`/`XHR`); the default isolated world otherwise. `world: "MAIN"` needs `minimum_chrome_version: "111"`.
+
+Full guide (how to add one, `@grant`->shim mapping, distribution channels): [docs/EXTENSIONS.md](docs/EXTENSIONS.md).
