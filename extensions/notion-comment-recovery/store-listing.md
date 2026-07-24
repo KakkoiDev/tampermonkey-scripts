@@ -3,6 +3,7 @@
 Canonical, paste-ready copy for the Developer Dashboard listing. Written to CWS limits (summary <= 132 chars, description <= 16000).
 
 - **Product name:** Notion Comment Recovery
+- **Item ID:** `mpcohjbomjhdkgbnkmgbkbnhihidgppj` (export as `CWS_EXTENSION_ID` for API updates; listing: https://chromewebstore.google.com/detail/mpcohjbomjhdkgbnkmgbkbnhihidgppj)
 - **Category:** Workflow & Planning (`CATEGORY_WORKFLOW_AND_PLANNING`)
 - **Language:** English
 - **Store icon:** `store-icon-128.png` (128x128; 96x96 artwork + 16px transparent padding per CWS guidelines). Do NOT use the manifest's `icons/icon-128.png` here - those are full-bleed for the toolbar.
